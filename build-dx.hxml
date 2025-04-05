@@ -1,0 +1,11 @@
+_base.hxml
+
+-cp src
+-main Main
+
+-lib hlopenal
+-lib hldx
+
+-D build_dir=build/dx
+
+-hl build/dx/hlboot.dat

@@ -1,0 +1,31 @@
+--library deepnightLibs:git:https://github.com/deepnight/deepnightLibs.git
+--library redistHelper:git:https://github.com/jefvel/redistHelper.git
+--library ldtk-haxe-api:1.5.3-rc.1
+--library ase:git:https://github.com/miriti/ase.git
+--library newgrounds
+--library differ
+--library echo
+--library castle:git:https://github.com/jefvel/castle.git#jefvel/add-dir-type
+--library hxWebSockets:git:https://github.com/jefvel/hxWebSockets.git
+
+--library hscript
+--library hxbit:git:https://github.com/jefvel/hxbit.git
+--library format:git:https://github.com/HaxeFoundation/format.git
+--library stb_ogg_sound
+
+--library heaps:git:https://github.com/jefvel/heaps.git#jefvel-branch
+--library elk:git:https://github.com/jefvel/elk.git
+
+# Hashlink
+--library hlsdl:git:https://github.com/jefvel/hlsdl.git
+--library hldx:git:https://github.com/jefvel/hldx.git
+--library hlopenal
+# Hide
+--library hxnodejs
+--library hx3compat
+--library domkit:git:https://github.com/HeapsIO/domkit.git
+--library hide:git:https://github.com/HeapsIO/hide.git
+--library closure
+
+# For rebuilding projects automatically
+--library watch:git:https://github.com/jefvel/watch.git

@@ -1,0 +1,6 @@
+build-sdl.hxml
+
+-D use_pak
+-D release
+
+--dce full

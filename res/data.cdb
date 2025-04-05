@@ -1,0 +1,236 @@
+{
+	"sheets": [
+		{
+			"name": "pak_config",
+			"columns": [
+				{
+					"typeStr": "0",
+					"name": "ID",
+					"scope": null
+				},
+				{
+					"typeStr": "8",
+					"name": "Directories",
+					"opt": true
+				},
+				{
+					"typeStr": "8",
+					"name": "Files",
+					"opt": true
+				},
+				{
+					"typeStr": "2",
+					"name": "Embed",
+					"documentation": "Embedded paks will always be available as soon as the game starts."
+				}
+			],
+			"lines": [
+				{
+					"ID": "Base",
+					"Embed": true,
+					"Directories": [
+						{
+							"Directory": "preloader"
+						}
+					],
+					"Files": [
+						{
+							"File": "data.cdb"
+						}
+					]
+				},
+				{
+					"ID": "TestPak",
+					"Embed": false,
+					"Directories": [
+						{
+							"Directory": "additional_data"
+						}
+					]
+				}
+			],
+			"separators": [],
+			"props": {}
+		},
+		{
+			"name": "pak_config@Directories",
+			"props": {
+				"hide": true
+			},
+			"separators": [],
+			"lines": [],
+			"columns": [
+				{
+					"typeStr": "21",
+					"name": "Directory"
+				}
+			]
+		},
+		{
+			"name": "pak_config@Files",
+			"props": {
+				"hide": true
+			},
+			"separators": [],
+			"lines": [],
+			"columns": [
+				{
+					"typeStr": "13",
+					"name": "File",
+					"opt": true
+				}
+			]
+		},
+		{
+			"name": "texts",
+			"columns": [
+				{
+					"typeStr": "0",
+					"name": "ID",
+					"kind": null,
+					"scope": null
+				},
+				{
+					"typeStr": "1",
+					"name": "Text",
+					"kind": null
+				}
+			],
+			"lines": [
+				{
+					"ID": "Hello",
+					"Text": "YEAHP"
+				}
+			],
+			"separators": [],
+			"props": {}
+		},
+		{
+			"name": "character",
+			"columns": [
+				{
+					"typeStr": "0",
+					"name": "ID",
+					"kind": null,
+					"scope": null
+				},
+				{
+					"typeStr": "1",
+					"name": "Name",
+					"kind": null
+				},
+				{
+					"typeStr": "19",
+					"name": "curva"
+				},
+				{
+					"typeStr": "19",
+					"name": "IdleSquash"
+				},
+				{
+					"typeStr": "4",
+					"name": "MoveSpeed",
+					"kind": null
+				},
+				{
+					"typeStr": "4",
+					"name": "MaxSpeed",
+					"kind": null
+				}
+			],
+			"lines": [
+				{
+					"ID": "Man",
+					"Name": "A Man",
+					"MaxSpeed": 6,
+					"MoveSpeed": 2,
+					"curva": [
+						0.00004489894145731643,
+						0,
+						-0.21036527153268184,
+						-0.12086176474379556,
+						0.07795641391890246,
+						0.04429782851553794,
+						0.22745364527100978,
+						0.026140069147086713,
+						-0.11939292579224223,
+						-0.0033898125684097835,
+						0.09248918443211612,
+						0.002646268080385246,
+						0.44491933153545116,
+						0.040713417362596115,
+						-0.07648064598714696,
+						0.008432960780349746,
+						0.12833577053430545,
+						-0.014101085353639742,
+						0.8652650598250867,
+						-0.06378998348165449,
+						-0.33932910007347117,
+						-0.0020743541099659257,
+						0.09365223485791131,
+						0.0005551647094803859,
+						0.9983028525257421,
+						0.0041740681285629,
+						-0.048061854049856745,
+						-0.04394723327804731,
+						0.027946363445542598,
+						0.025109610600206785
+					],
+					"IdleSquash": [
+						0,
+						1,
+						-0.4984492052332764,
+						0.00010860882640469666,
+						0.1560967308275189,
+						-0.0008226785485545562,
+						0.31021158598942167,
+						1.123423926525232,
+						-0.14059671549819935,
+						0.03134446454601103,
+						0.1294000717472145,
+						-0.027556821059513743,
+						0.5362690501237811,
+						1.1221825369450522,
+						-0.07931034482758625,
+						-0.00588235294117645,
+						0.14105113302097635,
+						0.010592822042058933,
+						0.7705969092874465,
+						0.9611394963896552,
+						-0.08575066049533608,
+						-0.02795818971681696,
+						0.07298958965196678,
+						0.023488755199495333,
+						1,
+						1,
+						-0.1825327132746386,
+						0.0057510816582011515,
+						0.10049383376585165,
+						-0.003602402014356773
+					]
+				}
+			],
+			"separators": [],
+			"props": {}
+		},
+		{
+			"name": "eventTypes",
+			"columns": [
+				{
+					"typeStr": "0",
+					"name": "ID",
+					"scope": null
+				}
+			],
+			"lines": [
+				{
+					"ID": "Test"
+				}
+			],
+			"separators": [],
+			"props": {}
+		}
+	],
+	"customTypes": [],
+	"compress": false
+}

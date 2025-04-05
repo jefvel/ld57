@@ -1,0 +1,69 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "haxe",
+      "args": "active configuration",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "revealProblems": "onProblem",
+        "clear": true,
+        "close": true
+      }
+    },
+    {
+      "label": "Install Haxe Dependencies",
+      "type": "shell",
+      "command": "haxelib install dependencies.hxml --always --quiet --skip-dependencies",
+      "problemMatcher": ["$haxe"]
+    },
+    {
+      "label": "HeapsJS",
+      "type": "shell",
+      "command": "haxe build-js.hxml",
+      "problemMatcher": ["$haxe"]
+    },
+    {
+      "label": "HeapsJS PAK",
+      "type": "hxml",
+      "file": "build-js-release.hxml"
+    },
+    {
+      "label": "File Server",
+      "type": "shell",
+      "command": "serve build/html5 9000"
+    },
+    {
+      "label": "Heaps Debug",
+      "type": "hxml",
+      "file": "build-debug.hxml",
+      "presentation": {
+        "reveal": "never",
+        "panel": "dedicated",
+        "clear": true,
+        "close": true
+      },
+      "problemMatcher": [
+        "$haxe-absolute",
+        "$haxe",
+        "$haxe-error",
+        "$haxe-trace"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "HeapsHL.DX",
+      "type": "hxml",
+      "file": "build-dx.hxml"
+    }
+  ]
+}

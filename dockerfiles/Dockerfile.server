@@ -1,0 +1,33 @@
+FROM haxe AS builder
+
+WORKDIR /
+
+COPY *.hxml /
+
+RUN haxelib install dependencies.hxml --always --quiet --skip-dependencies
+
+#COPY haxe_libraries /haxe_libraries
+#COPY .haxerc /
+#RUN lix download
+
+COPY res/db /res/db/
+COPY res/data.cdb /res/
+COPY res/levels/map.ldtk /res/levels/
+COPY res/img /res/img/
+COPY res/fonts /res/fonts/
+COPY res/preloader /res/preloader/
+COPY src /src/
+COPY templates /templates/
+
+RUN haxe build-server.hxml
+
+#FROM jefvel/hashlink:latest-alpine
+FROM jefvel/hashlink:latest
+
+COPY --from=builder /build/server/* /server/
+
+WORKDIR /server
+
+EXPOSE $PORT
+
+CMD ["hl"]

@@ -1,0 +1,15 @@
+{
+  "skipTerminateQuickPick": true,
+  "skipSwitchToOutput": false,
+  "skipErrorMessage": true,
+  "commands": [
+    {
+      "text": "📦 Redist",
+      "color": "lightgreen",
+      "command": "haxelib run redistHelper build-sdl-release.hxml build-js-release.hxml -o redist -icon icon.ico -zip",
+      "alignment": "right",
+      "skipTerminateQuickPick": false,
+      "priority": -50
+    }
+  ]
+}

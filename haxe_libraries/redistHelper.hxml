@@ -1,0 +1,5 @@
+# @install: lix --silent download "gh://github.com/jefvel/redistHelper#5641087e3d42b5d5fc80b4b2e4c6d664902a2b30" into redistHelper/0.7.6/github/5641087e3d42b5d5fc80b4b2e4c6d664902a2b30
+# @run: haxelib run-dir redistHelper "${HAXE_LIBCACHE}/redistHelper/0.7.6/github/5641087e3d42b5d5fc80b4b2e4c6d664902a2b30"
+-lib deepnightLibs
+-cp ${HAXE_LIBCACHE}/redistHelper/0.7.6/github/5641087e3d42b5d5fc80b4b2e4c6d664902a2b30/src/
+-D redistHelper=0.7.6

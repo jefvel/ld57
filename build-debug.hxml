@@ -1,0 +1,9 @@
+-D hot-reload
+-D hot_reload
+
+build-sdl.hxml
+
+#-D use_pak
+
+#-D hl-profile
+-debug

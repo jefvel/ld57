@@ -1,0 +1,14 @@
+_base.hxml
+
+-cp src
+-main Main
+
+-D build_dir=build/html5
+
+-lib elk
+--macro elk.buildutil.ResourceSteps.init_build_dir()
+
+--macro elk.buildutil.WebGenerator.generate()
+
+-js build/html5/game.js
+

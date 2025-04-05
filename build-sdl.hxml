@@ -1,0 +1,11 @@
+_base.hxml
+
+-cp src
+-main Main
+
+-lib hlopenal
+-lib hlsdl
+
+-D build_dir=build/sdl
+
+-hl build/sdl/hlboot.dat

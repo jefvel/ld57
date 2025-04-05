@@ -1,0 +1,24 @@
+services:
+  server:
+    platform: linux/amd64
+    image: hl-server
+    build: 
+      context: .
+      dockerfile: dockerfiles/Dockerfile.server
+    restart: unless-stopped
+    environment:
+      - PORT=9999
+      - HOST_ADDRESS=gameserver.jefvel.net
+      - DATA_DIR=data
+    develop:
+      watch:
+        - action: rebuild
+          path: src
+    ports:
+      - '9999:9999'
+    volumes:
+      - server_data:/server/data/:rw
+
+volumes:
+  server_data:
+    name: server_data

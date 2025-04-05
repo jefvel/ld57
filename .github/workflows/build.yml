@@ -1,0 +1,39 @@
+# @format
+
+name: CI
+
+on:
+  push:
+    branches:
+      - prod
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Update libraries
+        run: sudo apt-get update && sudo apt install vorbis-tools
+      - uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.6
+      - uses: cedx/setup-hashlink@v6
+      - name: Install dependencies
+        run: haxelib install dependencies.hxml --always --quiet --skip-dependencies
+      - name: Build
+        run: haxelib run redistHelper build-sdl-release.hxml build-js-release.hxml -o redist
+      - name: HTML5 Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-HTML5
+          path: redist/js
+      - name: SDL Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-SDL
+          path: redist/opengl_win

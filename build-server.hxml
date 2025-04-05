@@ -1,0 +1,17 @@
+#-D resourcesPath=res/server
+
+
+_base.hxml
+
+-D server
+-D threaded_server
+-D usesys
+
+#-lib nodejs 
+#-lib hxnodejs 
+#--js build/server/index.js
+
+-cp src
+--main net.StandaloneServer
+
+--hl build/server/hlboot.dat

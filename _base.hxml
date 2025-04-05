@@ -1,0 +1,29 @@
+--macro elk.buildutil.Config.initConfig()
+--macro hxbit.Macros.initVisibility(["all", "sameRoom", "self"])
+
+
+-lib heaps
+
+-lib deepnightLibs
+-lib ldtk-haxe-api
+-lib ase
+-lib hscript
+-lib castle
+-lib newgrounds
+-lib differ
+-lib elk
+
+-lib echo
+-D ECHO_USE_HEAPS
+
+-D build_dir=build
+
+-lib hxbit
+-lib hxWebSockets
+
+-D hxbit_visibility
+#-D hxbit_host_mt
+
+# -lib hide
+
+config.hxml

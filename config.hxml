@@ -1,0 +1,50 @@
+##################
+# Configuration
+###
+
+-D version = 0.1.0
+
+## Window
+-D windowTitle=Game Base 2.0
+-D windowSize=1280x800
+# Sets the default color of the scene + html background
+-D backgroundColor=#0a0a0a
+
+-D tickRate=60
+
+## LDTK CDB Enums (Defaults to CastleDB.hx, which contains the CDB definitions)
+-D ldtkCastle=assets/CastleDB
+
+# Uncomment if you want a static sized window size
+#-D windowFixed
+
+## Saves
+# Change this to a unique identifier for your game
+-D save_namespace=jefvel.gamebase
+
+## HTML/Js Specific values
+# Twitter card
+-D twitterSite=https://jefvel.net
+-D twitterCreator=@jefvel
+# OpenGraph
+-D ogUrl=https://jefvel.net
+-D ogDescription=Description
+-D ogImage=https://link.to.your.img/photo.png
+
+## Newgrounds stuff
+-D newgroundsAppId=Enter your app ID here
+# AES-128 Encryption key required
+-D newgroundsEncryptionKey=Enter your AES-128(base64) encryption key here
+
+
+## Network
+### Comment out if you want to use websockets (for running the game in browsers)
+-D use_websockets
+-D local_server
+
+## Resources
+-D resourcesPath=res
+
+## Uncomment if you want to disable JS minification when building
+## the JS release target
+#-D closure_disabled

@@ -1,0 +1,10 @@
+{
+  "fs.convert.hl": {},
+  "fs.convert": {
+    "aseprite,ase": "asedata",
+    "wav": "ogg"
+  },
+  "fs.convert.web": {
+    "cdb,ldtk,json": "hbson"
+  }
+}
