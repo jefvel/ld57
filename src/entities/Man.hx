@@ -22,6 +22,8 @@ class Man extends elk.entity.Entity {
 
 	var direction = 1;
 
+	public var started = false;
+
 	public var onGround = true;
 
 	public var obj : h2d.Object;
@@ -54,6 +56,7 @@ class Man extends elk.entity.Entity {
 
 	public function new(?p) {
 		super();
+		slowdown.ignoreTimeScale = true;
 		c = elk.castle.CastleDB.character.get(Man);
 
 		dbug = new Graphics(p);
@@ -73,6 +76,7 @@ class Man extends elk.entity.Entity {
 
 		light = new Object();
 		bigLight = new Bitmap(hxd.Res.img.light.toTile().center(), light);
+		bigLight.setScale(1.1);
 		var manLight = new Bitmap(hxd.Res.img.manlight.toTile().center(), light);
 
 		txt = new Text(DefaultFont.get(), PlayState.instance);
@@ -80,10 +84,10 @@ class Man extends elk.entity.Entity {
 
 	override function render() {
 		super.render();
-		obj.x = x;
-		obj.y = y;
-		light.x = x;
-		light.y = y;
+		obj.x = interpX;
+		obj.y = interpY;
+		light.x = obj.x;
+		light.y = obj.y;
 	}
 
 	function doDodge() {
@@ -101,11 +105,15 @@ class Man extends elk.entity.Entity {
 		Elk.instance.sounds.playWobble(hxd.Res.sound.dodge, 0.4);
 	}
 
+	public var freeMove = false;
+
 	public function dash() {
 		if( !onGround ) {
 			doDodge();
 			return;
 		}
+
+		started = true;
 
 		var dashAcc = c.DashPower * direction;
 		ax += dashAcc;
@@ -198,6 +206,15 @@ class Man extends elk.entity.Entity {
 
 		x = rx;
 		y = ry;
+	}
+
+	public var evaporated = false;
+
+	public function evaporate() {
+		if( evaporated ) return;
+		evaporated = true;
+		sprite.animation.play('evap', false, true);
+		Elk.instance.sounds.playWobble(hxd.Res.sound.poof, 0.4);
 	}
 
 	function wallBounce() {
@@ -310,6 +327,7 @@ class Man extends elk.entity.Entity {
 
 	function die() {
 		if( dead ) return;
+		slowdown.setImmediate(1.0);
 		dead = true;
 		sprite.animation.play('dead', false);
 		PlayState.instance.onDie();
@@ -332,6 +350,36 @@ class Man extends elk.entity.Entity {
 			return;
 		};
 
+		var shouldSlowdown = false;
+		if( vy > c.TerminalVel * 0.6 ) {
+			var closeToCandle = false;
+			var r = 100.0;
+
+			var cr = r * r;
+			var xx = Math.abs(vx) > c.TerminalVel * 0.9 ? 60 : 20;
+			for (c in PlayState.candlePositions) {
+				if( c.y < y ) continue;
+				var dx = c.x - x;
+				if( Math.abs(dx) > xx ) continue;
+
+				var dy = c.y - y;
+				if( Math.abs(dy) < 100 ) {
+					closeToCandle = true;
+					break;
+				}
+			}
+
+			if( closeToCandle ) {
+				shouldSlowdown = true;
+			}
+		}
+
+		if( shouldSlowdown ) {
+			slowdown.value = 0.2;
+		} else {
+			slowdown.value = 1.0;
+		}
+
 		var fric = 1 / (1 + (dt * friction));
 
 		vx += ax * dt;
@@ -339,7 +387,12 @@ class Man extends elk.entity.Entity {
 
 		sprite.scaleY = squish.value;
 
-		moveAndSlide(vx * dt, vy * dt);
+		if( !freeMove ) moveAndSlide(vx * dt, vy * dt);
+		else {
+			var dd = Input.getVector(Key.A, Key.D, Key.W, Key.S);
+			x += dd.x * 5;
+			y += dd.y * 5;
+		}
 
 		if( dead ) return;
 
@@ -390,7 +443,7 @@ class Man extends elk.entity.Entity {
 		lastX = x;
 		lastY = y;
 
-		stoopPower *= 0.8;
+		stoopPower *= 0.9;
 
 		if( !onGround ) {
 			var extraDown = 1.0;
@@ -398,13 +451,14 @@ class Man extends elk.entity.Entity {
 				extraDown = c.ExtraDown;
 				vx *= c.ExtraDownFriction;
 				if( vy > 100 ) {
-					stoopPower += (1 - stoopPower) * 0.1;
+					stoopPower += (1 - stoopPower) * 0.05;
 					if( stoopPower > 0.3 ) startingStoop();
 				}
 			} else {
 				endingStoop();
 				var toEase = vy * (stoopPower);
-				vy -= toEase * 1.3;
+				vy -= toEase * 1.5;
+				ay -= toEase * 0.9;
 				vx += toEase * direction;
 			}
 			ay += c.Gravity * extraDown;
@@ -417,6 +471,8 @@ class Man extends elk.entity.Entity {
 
 	var stooping = false;
 	var squish = EasedFloat.elastic(1.0, 0.5);
+
+	public var slowdown = EasedFloat.smootherstep_in_out(1.0, 0.2);
 
 	function startingStoop() {
 		if( stooping ) return;

@@ -31,20 +31,14 @@
 					"Directories": [
 						{
 							"Directory": "preloader"
+						},
+						{
+							"Directory": "db"
 						}
 					],
 					"Files": [
 						{
 							"File": "data.cdb"
-						}
-					]
-				},
-				{
-					"ID": "TestPak",
-					"Embed": false,
-					"Directories": [
-						{
-							"Directory": "additional_data"
 						}
 					]
 				}
@@ -190,7 +184,7 @@
 				{
 					"ID": "Man",
 					"Name": "A Man",
-					"MaxSpeed": 300,
+					"MaxSpeed": 260,
 					"curva": [
 						0.00004489894145731643,
 						0,
@@ -263,12 +257,12 @@
 					"ExtraDown": 2.5,
 					"Friction": 0.15,
 					"ExtraDownFriction": 0.98,
-					"TerminalVel": 500,
+					"TerminalVel": 530,
 					"DodgeDuration": 0.15,
 					"PerfectDodgeDuration": 0.05,
 					"WallJumpVel": 70,
 					"DashJumpVel": 200,
-					"MaxSpeedV": 650
+					"MaxSpeedV": 600
 				}
 			],
 			"separators": [],

@@ -15,9 +15,8 @@ typedef MPClient = MultiplayerPlayer;
 class MultiplayerHandler implements hxbit.NetworkSerializable {
 	public static var instance : MultiplayerHandler;
 
-	@:s public var players : Array<MPClient> = [];
+	public var players : Array<MPClient> = [];
 
-	@:s
 	public var entities : Array<NWEntity> = [];
 
 	public var host(default, null) : hxbit.NetworkHost = null;

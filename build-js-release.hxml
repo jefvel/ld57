@@ -1,6 +1,6 @@
 build-js.hxml
 
--D use_pak
+#-D use_pak
 -D release
 
 ## If enabled, all paks will be purged instead of creating patches

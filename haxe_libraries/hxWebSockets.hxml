@@ -1,3 +1,0 @@
-# @install: lix --silent download "gh://github.com/jefvel/hxWebSockets#c8107a6923ff21d19ca7d029d8269d7190b1dc42" into hxWebSockets/1.4.0/github/c8107a6923ff21d19ca7d029d8269d7190b1dc42
--cp ${HAXE_LIBCACHE}/hxWebSockets/1.4.0/github/c8107a6923ff21d19ca7d029d8269d7190b1dc42/
--D hxWebSockets=1.4.0

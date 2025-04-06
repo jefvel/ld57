@@ -1,5 +1,8 @@
 package gamestates;
 
+import hxd.snd.effect.LowPass;
+import hxd.snd.effect.Pitch;
+import h2d.TileGroup;
 import elk.graphics.Sprite;
 import elk.Timeout;
 import shader.DitherMask;
@@ -48,11 +51,20 @@ class PlayState extends GameState {
 		hxd.Res.music.music2,
 		hxd.Res.music.music3,
 		hxd.Res.music.music4,
+		hxd.Res.music.music5,
 	];
+
 	var music_thresholds : Array<assets.LDTKProject.Entity_MusicChange> = [];
 	var playing : Array<hxd.snd.Channel> = [];
 
 	public var levels : Array<assets.LDTKProject.LDTKProject_Level> = [];
+
+	public static var deaths = 0;
+	public static var playTime = 0.0;
+	public static var runTime = 0.0;
+	public static var candlePositions : Array<{x : Float, y : Float}> = [];
+
+	public var winY = 999999.0;
 
 	override function on_enter() {
 		instance = this;
@@ -85,7 +97,8 @@ class PlayState extends GameState {
 		var l = new assets.LDTKProject(hxd.Res.levels.map.entry.getJsonText());
 		objects = new Layers(world);
 		for (level in l.all_worlds.Default.levels) {
-			var tg = level.l_AutoLayer.render();
+			var tileGroup = new TileGroup(hxd.Res.img.tiles.toTile());
+			var tg = level.l_AutoLayer.render(tileGroup);
 			for (e in level.l_Entities.all_SpawnPoint) {
 				spawnPoint = e;
 			}
@@ -105,6 +118,14 @@ class PlayState extends GameState {
 				c.animation.play('idle');
 			}
 
+			for (c in level.l_Entities.all_Cake) {
+				var cao = new Bitmap(hxd.Res.img.cake.toTile(), objects);
+				cao.x = c.worldPixelX;
+				cao.y = c.worldPixelY;
+			}
+
+			for (c in candlePositions) createCandle(c.x, c.y, smallLight);
+
 			for (m in level.l_Entities.all_MusicChange) music_thresholds.push(m);
 		}
 
@@ -112,6 +133,10 @@ class PlayState extends GameState {
 
 		game.console.addCommand('bias', '', [{name : 'alpha', t : AFloat}], (a) -> {
 			dither.bias = a;
+		});
+
+		game.console.addCommand('godmode', '', [], (a) -> {
+			man.freeMove = !man.freeMove;
 		});
 
 		man = new Man(objects);
@@ -129,8 +154,20 @@ class PlayState extends GameState {
 
 		tutorialMask.alpha = 0.5;
 
+		// pitch = game.sounds.musicChannel.getEffect(LowPass);
+		pitch = game.sounds.musicChannel.getEffect(Pitch);
+		if( pitch == null ) {
+			// pitch = new hxd.snd.effect.LowPass();
+			pitch = new hxd.snd.effect.Pitch(1);
+			game.sounds.musicChannel.addEffect(pitch);
+		}
+		pitch.value = 1.0;
+		// pitch.gainHF = 1.0;
+
 		// connect();
 	}
+
+	var pitch : Pitch;
 
 	var joystick : Joystick;
 
@@ -189,10 +226,19 @@ class PlayState extends GameState {
 
 	override function update(dt : Float) {
 		super.update(dt);
+		if( man != null && game.timeScale > 0 ) {
+			game.timeScale = man.slowdown.value;
+			pitch.value = Math.max(1 / (3 / 2), game.timeScale);
+			// var p = Math.max(1 + (game.timeScale - 1) * 2, 0.05);
+			// pitch.gainHF = p;
+		}
 	}
 
 	override function draw(ctx : RenderContext) {
 		super.draw(ctx);
+
+		if( man == null ) return;
+
 		var w = Math.round(game.s2d.width * 0.5);
 		var h = Math.round(game.s2d.height * 0.5);
 
@@ -213,6 +259,7 @@ class PlayState extends GameState {
 	override function on_leave() {
 		super.on_leave();
 		container.remove();
+		man.remove();
 		stopMusic();
 	}
 
@@ -222,11 +269,41 @@ class PlayState extends GameState {
 		t.ignoreTimeScale = true;
 	}
 
+	public function createCandle(x : Float, y : Float, ?t : Tile) {
+		var smallLight = t != null ? t : hxd.Res.img.small_light.toTile().center();
+		var li = new Bitmap(smallLight, lights);
+		li.x = x;
+		li.y = y;
+		var c = hxd.Res.img.candle.toSprite(objects);
+		c.set_origin(0.5, 0.6);
+		c.x = li.x;
+		c.y = li.y;
+		c.animation.play('idle');
+	}
+
+	public function spawnCandle(x : Float, y : Float) {
+		for (c in candlePositions) {
+			var dx = x - c.x;
+			var dy = y - c.y;
+			if( Math.sqrt(dx * dx + dy * dy) < 32 ) {
+				candlePositions.remove(c);
+			}
+		}
+
+		candlePositions.push({x : x, y : y});
+		createCandle(x, y);
+	}
+
+	public var won = false;
+
 	override function tick(dt : Float) {
 		elapsed += dt;
 		event.update(dt);
 		objects.ysort(0);
 		dither.bias += (0.01 - dither.bias) * 0.1;
+		if( man.started && !man.dead && !won ) {
+			runTime += dt;
+		}
 
 		var thr = music_thresholds[musicIndex];
 		if( thr != null ) {
@@ -238,7 +315,7 @@ class PlayState extends GameState {
 					immediate = false;
 				}
 				if( immediate ) {
-					for (m in musics) playing.push(m.play(true, 0.0));
+					for (m in musics) playing.push(m.play(true, 0.0, game.sounds.musicChannel));
 				}
 
 				curMusic = playing[musicIndex];
@@ -249,7 +326,12 @@ class PlayState extends GameState {
 		}
 		// lights.alpha += (1 - lights.alpha) * 0.1;
 
-		if( man.dead && man.deadTime > 0.7 && man.dashPressed() ) {
+		if( man.dead && man.deadTime > 0.8 && !man.evaporated ) {
+			man.evaporate();
+			spawnCandle(man.x, man.y + 3);
+		}
+
+		if( man.dead && man.deadTime > 1.0 && man.dashPressed() ) {
 			reset();
 		}
 
@@ -264,5 +346,10 @@ class PlayState extends GameState {
 
 	public function onDie() {
 		stopMusic();
+		deaths++;
 	}
+
+	var winText : Text;
+
+	public function showWin() {}
 }

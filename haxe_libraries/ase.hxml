@@ -1,3 +1,0 @@
-# @install: lix --silent download "gh://github.com/miriti/ase#fafac6707a61f086e7b0f8baca5bdafb92a514f2" into ase/2.1.0/github/fafac6707a61f086e7b0f8baca5bdafb92a514f2
--cp ${HAXE_LIBCACHE}/ase/2.1.0/github/fafac6707a61f086e7b0f8baca5bdafb92a514f2/src
--D ase=2.1.0

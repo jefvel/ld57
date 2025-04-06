@@ -1,3 +1,0 @@
-# @install: lix --silent download "haxelib:/stb_ogg_sound#0.0.2" into stb_ogg_sound/0.0.2/haxelib
--cp ${HAXE_LIBCACHE}/stb_ogg_sound/0.0.2/haxelib/
--D stb_ogg_sound=0.0.2

@@ -2,7 +2,7 @@
 # Configuration
 ###
 
--D version = 0.1.0
+-D version = 0.1.1
 
 ## Window
 -D windowTitle=LD 57
@@ -16,7 +16,7 @@
 -D ldtkCastle=assets/CastleDB
 
 # Uncomment if you want a static sized window size
-#-D windowFixed
+-D windowFixed
 
 ## Saves
 # Change this to a unique identifier for your game

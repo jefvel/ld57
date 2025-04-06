@@ -1,4 +1,0 @@
-# @install: lix --silent download "gh://github.com/jefvel/heaps#86628375f8d8fe7f6cc95018225d1f59edc9678d" into heaps/2.0.0/github/86628375f8d8fe7f6cc95018225d1f59edc9678d
--lib format
--cp ${HAXE_LIBCACHE}/heaps/2.0.0/github/86628375f8d8fe7f6cc95018225d1f59edc9678d/
--D heaps=2.0.0

@@ -1,4 +1,0 @@
-# @install: lix --silent download "gh://github.com/jefvel/elk#2717f974eea08e01450d46480b86d69a7f4a65c4" into elk/1.0.1/github/2717f974eea08e01450d46480b86d69a7f4a65c4
-# @run: haxelib run-dir elk "${HAXE_LIBCACHE}/elk/1.0.1/github/2717f974eea08e01450d46480b86d69a7f4a65c4"
--cp ${HAXE_LIBCACHE}/elk/1.0.1/github/2717f974eea08e01450d46480b86d69a7f4a65c4/src/
--D elk=1.0.1

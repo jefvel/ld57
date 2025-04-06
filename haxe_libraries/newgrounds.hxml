@@ -1,3 +1,0 @@
-# @install: lix --silent download "haxelib:/newgrounds#2.0.3" into newgrounds/2.0.3/haxelib
--cp ${HAXE_LIBCACHE}/newgrounds/2.0.3/haxelib/lib/Source
--D newgrounds=2.0.3
