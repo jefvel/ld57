@@ -35,6 +35,6 @@ class Main extends elk.Elk {
 		#if sys
 		sys.ssl.Socket.DEFAULT_VERIFY_CERT = false;
 		#end
-		app = new Main(60, 2);
+		app = new Main(60, 3);
 	}
 }

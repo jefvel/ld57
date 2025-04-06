@@ -1,37 +1,20 @@
 package gamestates;
 
-import elk.input.Input;
-import net.MultiplayerPlayer;
-import h2d.RenderContext;
 import elk.graphics.Sprite;
-import net.MultiplayerHandler;
-import entities.Cursor;
-import elk.input.Joystick;
-import haxe.io.Bytes;
-import elk.util.ResTools;
+import elk.Timeout;
+import shader.DitherMask;
 import h2d.Tile;
 import h2d.Bitmap;
-import h2d.Object;
-import h2d.Layers;
-import entities.TestEntity;
-import hxd.res.DefaultFont;
-import h2d.Text;
+import h2d.RenderContext;
+import h2d.Camera;
+import entities.Man;
 import elk.gamestate.GameState;
-
-private class TT implements elk.util.RectPacker.RectPackNode {
-	public var bmp : h2d.Bitmap;
-
-	public var width = 1;
-	public var height = 0;
-	public var x : Int = 0;
-	public var y : Int = 0;
-
-	public function new(p) {
-		width = Std.random(200) + 8;
-		height = Std.random(200) + 8;
-		bmp = new h2d.Bitmap(h2d.Tile.fromColor(Std.int(Math.random() * 0xffffff), width, height), p);
-	}
-}
+import elk.input.Joystick;
+import h2d.Layers;
+import h2d.Object;
+import h2d.Text;
+import haxe.io.Bytes;
+import net.MultiplayerHandler;
 
 class PlayState extends GameState {
 	var time = 0.;
@@ -42,123 +25,116 @@ class PlayState extends GameState {
 	public static var instance : PlayState;
 
 	public var container = new Object();
-
+	public var world = new Object();
 	public var objects : Layers;
-
-	public static var cursor : Cursor;
 
 	public static var host : elk.net.Client;
 
-	var txt : h2d.Text;
+	var spawnPoint : assets.LDTKProject.Entity_SpawnPoint;
+	var man : Man;
+
+	var camera : Camera;
+
+	var dither : DitherMask;
+	var bg : Bitmap;
+	var lights : Object;
+
+	var tutorialContainer : Object;
+	var tutorial : Sprite;
+
+	var musicIndex = 0;
+	var musics = [
+		hxd.Res.music.music1,
+		hxd.Res.music.music2,
+		hxd.Res.music.music3,
+		hxd.Res.music.music4,
+	];
+	var music_thresholds : Array<assets.LDTKProject.Entity_MusicChange> = [];
+	var playing : Array<hxd.snd.Channel> = [];
+
+	public var levels : Array<assets.LDTKProject.LDTKProject_Level> = [];
 
 	override function on_enter() {
 		instance = this;
-		elk.Elk.instance.console.add('exit', () -> Sys.exit(0));
+
+		container.addChild(world);
+
+		bg = new Bitmap(Tile.fromColor(0x000000), this);
+		bg.width = game.s2d.width;
+		bg.height = game.s2d.height;
+
+		lights = new Object(world);
+
+		dither = new DitherMask(lights);
+		dither.bias = 1;
+		dither.smoothAlpha = true;
+
 		addChild(container);
-		// container.filter = new h2d.filter.Nothing();
+		// lights.visible = false;
+		container.filter = dither; // new h2d.filter.Nothing();
 
-		objects = new Layers(container);
+		camera = game.s2d.camera;
 
-		// createRectPack();
+		var smallLight = hxd.Res.img.small_light.toTile().center();
+
+		game.console.addCommand('l', '', [], () -> {
+			if( container.filter != null ) container.filter = null;
+			else container.filter = dither;
+		});
 
 		var l = new assets.LDTKProject(hxd.Res.levels.map.entry.getJsonText());
-		for (level in l.all_worlds.Default.levels) trace(level.identifier);
-
-		tickRateTxt = new Text(DefaultFont.get(), container);
-		tickRateTxt.textColor = 0xffffff;
-
-		var b = new Bitmap(Tile.fromColor(0xff111111), this);
-		b.alpha = 0.8;
-		b.width = game.s2d.width;
-		txt = new Text(hxd.Res.fonts.LibreBaskerville_Regular.toSdfFont(8, h2d.Font.SDFChannel.MultiChannel), this);
-		txt.y = 4;
-		txt.x = 4;
-		txt.rotation = -0.02;
-		txt.text = "-";
-		b.height = txt.y * 2 + txt.textHeight;
-
-		ResTools.load_named_pak(TestPak, () -> {
-			trace('loaded pak');
-			/*
-				var b = new h2d.Bitmap(hxd.Res.additional_data.ball_copy_2.toTile(), container);
-				b.y = 50;
-				b.scale(0.04);
-			 */
-		}, (p : Float) -> {
-			txt.text = 'additional loaded ${Math.round(p * 100)}%';
-		});
-
-		connect();
-
-		elk.Elk.instance.console.add('he', () -> {
-			trace('doing call');
-			var req = new elk.net.http.AsyncHttpRequest('https://httpbin.org/delay/1');
-			req.onResponse = (e, r) -> {
-				trace('${r.statusCode}: ${e}');
+		objects = new Layers(world);
+		for (level in l.all_worlds.Default.levels) {
+			var tg = level.l_AutoLayer.render();
+			for (e in level.l_Entities.all_SpawnPoint) {
+				spawnPoint = e;
 			}
-			req.run();
-			trace('did call.');
+			levels.push(level);
+
+			tg.x = level.worldX;
+			tg.y = level.worldY;
+			world.addChild(tg);
+			for (l in level.l_Entities.all_Light) {
+				var li = new Bitmap(smallLight, lights);
+				li.x = l.worldPixelX;
+				li.y = l.worldPixelY;
+				var c = hxd.Res.img.candle.toSprite(objects);
+				c.set_origin(0.5, 0.6);
+				c.x = li.x;
+				c.y = li.y;
+				c.animation.play('idle');
+			}
+
+			for (m in level.l_Entities.all_MusicChange) music_thresholds.push(m);
+		}
+
+		music_thresholds.sort((a, b) -> a.worldPixelY - b.worldPixelY);
+
+		game.console.addCommand('bias', '', [{name : 'alpha', t : AFloat}], (a) -> {
+			dither.bias = a;
 		});
+
+		man = new Man(objects);
+		man.teleport(spawnPoint.worldPixelX, spawnPoint.worldPixelY);
+		lights.addChild(man.light);
 
 		joystick = new Joystick(Left, this);
-		spri = hxd.Res.img.ball_copy.toSprite(container);
-		spri.x = spri.y = 40;
-		spri.animation.play("aaaa");
-		blob = hxd.Res.img.blob.toSprite(container);
-		blob.center_origin();
-		spri.center_origin();
 
-		// var s = hxd.Res.img.ab_avatar_24_squid_edits.toSprite(container);
-		// s.x = s.y = 100;
-		// spri.animation.play("ddd");
+		tutorialContainer = new Object(world);
+		tutorial = hxd.Res.img.tutorial.toSprite(tutorialContainer);
+		var tutorialMask = hxd.Res.img.tutorial.toSprite();
+		lights.addChild(tutorialMask);
+		tutorial.animation.pause = true;
+		tutorialMask.animation.pause = true;
+
+		tutorialMask.alpha = 0.5;
+
+		// connect();
 	}
-
-	var spri : Sprite;
-	var blob : Sprite;
 
 	var joystick : Joystick;
 
-	var rectContainer : h2d.Object;
-
-	function createRectPack() {
-		var packer = new elk.util.RectPacker<TT>(256, 256);
-		if( rectContainer == null ) {
-			rectContainer = new h2d.Object(container);
-			rectContainer.scale(0.5);
-		}
-		rectContainer.removeChildren();
-		for (i in 0...300) {
-			var r = new TT(rectContainer);
-			packer.add(r);
-		}
-
-		for (i in 0...300) {
-			var r = new TT(rectContainer);
-			r.width = 16 + Std.random(16);
-			r.height = 16 + Std.random(16);
-			r.bmp.width = r.width;
-			r.bmp.height = r.height;
-			packer.add(r);
-		}
-
-		for (r in @:privateAccess packer.nodes) {
-			r.bmp.x = r.x;
-			r.bmp.y = r.y;
-			// r.bmp.visible = false;
-			r.bmp.alpha = 0.3;
-		}
-
-		for (r in @:privateAccess packer.freeRects) {
-			var bmp = new h2d.Bitmap(h2d.Tile.fromColor(0xffffff, r.width, r.height, 0.2));
-			bmp.x = r.x;
-			bmp.y = r.y;
-			// rectContainer.addChild(bmp);
-		}
-		trace('packer size: ${packer.width}x${packer.height}');
-	}
-
 	public function connect() {
-		cursor = null;
 		var handler = MultiplayerHandler.instance;
 		if( handler != null ) {
 			handler.reset();
@@ -191,15 +167,12 @@ class PlayState extends GameState {
 
 		host.websocketProtocols = ['auth_token', hash];
 		host.onConnected = () -> {
-			txt.text = "Connected :)";
+			game.console.log("Connected :)");
 		}
 		host.onDisconnected = () -> {
-			txt.text = "Disconnected.";
 			MultiplayerHandler.instance?.reset();
 		}
-		host.onConnectionFailure = () -> {
-			txt.text = "Failed to connect.";
-		}
+		host.onConnectionFailure = () -> {}
 
 		host.onMessage = (client, m) -> {
 			MultiplayerHandler.handleMessage(client, m);
@@ -212,73 +185,84 @@ class PlayState extends GameState {
 
 	public static var event = new hxd.WaitEvent();
 
-	override function draw(ctx : RenderContext) {
-		super.draw(ctx);
-		if( spri == null ) return;
-		var sli = spri.animation.getSlice("top");
-		if( sli != null ) {
-			blob.x = sli.x + spri.x - spri.originX + intX.value;
-			blob.y = sli.y + spri.y - spri.originY;
-		}
-	}
+	var curMusic : hxd.snd.Channel = null;
 
 	override function update(dt : Float) {
 		super.update(dt);
-		if( Input.isKeyDown(hxd.Key.U) ) {
-			elk.Elk.instance.timeScale += (0.5 - elk.Elk.instance.timeScale) * 0.1;
-		} else {
-			elk.Elk.instance.timeScale += (1 - elk.Elk.instance.timeScale) * 0.1;
-		}
+	}
+
+	override function draw(ctx : RenderContext) {
+		super.draw(ctx);
+		var w = Math.round(game.s2d.width * 0.5);
+		var h = Math.round(game.s2d.height * 0.5);
+
+		var manX = man.obj.x;
+		var manY = man.obj.y;
+
+		var camX = (-manX + w);
+		var camY = (-manY + h);
+		dither.offset.set(-camX, -camY);
+		world.setPosition(camX, camY);
+	}
+
+	public function reset() {
+		stopMusic();
+		game.states.change(new PlayState());
+	}
+
+	override function on_leave() {
+		super.on_leave();
+		container.remove();
+		stopMusic();
+	}
+
+	public function freeze(time : Float = 0.1) {
+		elk.Elk.instance.timeScale = 0.0;
+		var t = new Timeout(time, () -> elk.Elk.instance.timeScale = 1.0);
+		t.ignoreTimeScale = true;
 	}
 
 	override function tick(dt : Float) {
 		elapsed += dt;
 		event.update(dt);
-		spri.rotation = Math.sin(elapsed) * 0.1;
-		intX.value = Math.sin(elk.Elk.instance.scaledTime) * 100 + 100;
-
-		var self = MultiplayerHandler.instance?.self;
-		if( self != null ) {
-			cursor = self?.cursor;
-			if( Input.isKeyPressed(hxd.Key.T) ) {
-				self.changeRoom(self.roomId + 1);
-			}
-		}
-
-		super.tick(dt);
-		time += dt;
-
-		if( Input.isKeyPressed(hxd.Key.R) ) {
-			connect();
-		}
-
-		if( Input.isKeyPressed(hxd.Key.F) ) createRectPack();
-
-		if( cursor != null && self != null ) {
-			/*
-				self.x = game.s2d.mouseX;
-				self.y = game.s2d.mouseY;
-			 */
-			var d = Input.getVector(hxd.Key.A, hxd.Key.D, hxd.Key.W, hxd.Key.S);
-			if( d.lengthSq() == 0 ) {
-				d.x = joystick.mx;
-				d.y = joystick.my;
-			}
-			self.local_x += d.x * self.cursor.max_speed;
-			self.local_y += d.y * self.cursor.max_speed;
-			if( Input.isKeyPressed(hxd.Key.SPACE) ) {
-				self.blink();
-			}
-		}
-
-		if( host != null && elapsed > 0.1 ) {
-			elapsed -= 0.1;
-			host.flush();
-		}
-
-		tickRateTxt.text = CastleDB.texts.get(Hello).Text;
-		tickRateTxt.x = game.s2d.width - tickRateTxt.textWidth - 4;
-		tickRateTxt.y = game.s2d.height - tickRateTxt.textHeight - 2;
 		objects.ysort(0);
+		dither.bias += (0.01 - dither.bias) * 0.1;
+
+		var thr = music_thresholds[musicIndex];
+		if( thr != null ) {
+			if( thr.worldPixelY < man.y ) {
+				var immediate = true;
+				if( curMusic != null ) {
+					var cc = curMusic;
+					cc.fadeTo(0.0, 0.8, () -> cc.stop());
+					immediate = false;
+				}
+				if( immediate ) {
+					for (m in musics) playing.push(m.play(true, 0.0));
+				}
+
+				curMusic = playing[musicIndex];
+				curMusic.fadeTo(0.6, immediate ? 0.0 : 1.0);
+
+				musicIndex++;
+			}
+		}
+		// lights.alpha += (1 - lights.alpha) * 0.1;
+
+		if( man.dead && man.deadTime > 0.7 && man.dashPressed() ) {
+			reset();
+		}
+
+		if( hxd.Key.isPressed(hxd.Key.R) ) {
+			reset();
+		}
+	}
+
+	function stopMusic() {
+		for (m in musics) m.stop();
+	}
+
+	public function onDie() {
+		stopMusic();
 	}
 }

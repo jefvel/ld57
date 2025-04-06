@@ -1,7 +1,5 @@
 package net;
 
-import entities.TestEntity;
-import entities.Cursor;
 import elk.net.MultiplayerClient;
 
 #if (sys || hxnodejs)
@@ -43,12 +41,6 @@ class StandaloneServer extends elk.Elk {
 		server.on_client_disconnected = (player) -> {
 			trace('server: client disconnect: $player');
 			handler.removeClient(player);
-		}
-
-		for (i in 0...1000) {
-			var e = new TestEntity();
-			e.posX = Std.random(400);
-			e.posY = Std.random(400);
 		}
 
 		Sys.println('✅ Listening on $bind_address:$bind_port');

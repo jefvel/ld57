@@ -120,6 +120,34 @@
 					"kind": null
 				},
 				{
+					"typeStr": "4",
+					"name": "Gravity"
+				},
+				{
+					"typeStr": "4",
+					"name": "ExtraDown"
+				},
+				{
+					"typeStr": "4",
+					"name": "ExtraDownFriction"
+				},
+				{
+					"typeStr": "4",
+					"name": "DashPower"
+				},
+				{
+					"typeStr": "4",
+					"name": "DashPowerVel"
+				},
+				{
+					"typeStr": "4",
+					"name": "JumpPower"
+				},
+				{
+					"typeStr": "4",
+					"name": "TerminalVel"
+				},
+				{
 					"typeStr": "19",
 					"name": "curva"
 				},
@@ -129,21 +157,40 @@
 				},
 				{
 					"typeStr": "4",
-					"name": "MoveSpeed",
-					"kind": null
+					"name": "Friction"
 				},
 				{
 					"typeStr": "4",
 					"name": "MaxSpeed",
 					"kind": null
+				},
+				{
+					"typeStr": "4",
+					"name": "MaxSpeedV"
+				},
+				{
+					"typeStr": "4",
+					"name": "DodgeDuration",
+					"defaultValue": 0.1
+				},
+				{
+					"typeStr": "4",
+					"name": "PerfectDodgeDuration"
+				},
+				{
+					"typeStr": "4",
+					"name": "WallJumpVel"
+				},
+				{
+					"typeStr": "4",
+					"name": "DashJumpVel"
 				}
 			],
 			"lines": [
 				{
 					"ID": "Man",
 					"Name": "A Man",
-					"MaxSpeed": 6,
-					"MoveSpeed": 2,
+					"MaxSpeed": 300,
 					"curva": [
 						0.00004489894145731643,
 						0,
@@ -207,7 +254,21 @@
 						0.0057510816582011515,
 						0.10049383376585165,
 						-0.003602402014356773
-					]
+					],
+					"Gravity": 11,
+					"Dash Power": 0,
+					"DashPower": 50,
+					"JumpPower": 100,
+					"DashPowerVel": 150,
+					"ExtraDown": 2.5,
+					"Friction": 0.15,
+					"ExtraDownFriction": 0.98,
+					"TerminalVel": 500,
+					"DodgeDuration": 0.15,
+					"PerfectDodgeDuration": 0.05,
+					"WallJumpVel": 70,
+					"DashJumpVel": 200,
+					"MaxSpeedV": 650
 				}
 			],
 			"separators": [],

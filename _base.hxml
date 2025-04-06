@@ -21,9 +21,6 @@
 -lib hxbit
 -lib hxWebSockets
 
--D hxbit_visibility
-#-D hxbit_host_mt
-
 # -lib hide
 
 config.hxml

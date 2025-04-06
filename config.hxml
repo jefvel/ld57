@@ -5,10 +5,10 @@
 -D version = 0.1.0
 
 ## Window
--D windowTitle=Game Base 2.0
--D windowSize=1280x800
+-D windowTitle=LD 57
+-D windowSize=1281x720
 # Sets the default color of the scene + html background
--D backgroundColor=#0a0a0a
+-D backgroundColor=#010d1a
 
 -D tickRate=60
 
@@ -20,7 +20,7 @@
 
 ## Saves
 # Change this to a unique identifier for your game
--D save_namespace=jefvel.gamebase
+-D save_namespace=jefvel.ld57
 
 ## HTML/Js Specific values
 # Twitter card
@@ -41,6 +41,9 @@
 ### Comment out if you want to use websockets (for running the game in browsers)
 -D use_websockets
 -D local_server
+
+#-D hxbit_visibility
+#-D hxbit_host_mt
 
 ## Resources
 -D resourcesPath=res
