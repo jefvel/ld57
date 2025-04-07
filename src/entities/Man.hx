@@ -30,6 +30,8 @@ class Man extends elk.entity.Entity {
 
 	public var light : Object;
 
+	var par : Object;
+
 	var bigLight : Bitmap;
 
 	var aliveTime = 0.0;
@@ -56,6 +58,7 @@ class Man extends elk.entity.Entity {
 
 	public function new(?p) {
 		super();
+		par = p;
 		slowdown.ignoreTimeScale = true;
 		c = elk.castle.CastleDB.character.get(Man);
 
@@ -80,6 +83,7 @@ class Man extends elk.entity.Entity {
 		var manLight = new Bitmap(hxd.Res.img.manlight.toTile().center(), light);
 
 		txt = new Text(DefaultFont.get(), PlayState.instance);
+		txt.visible = false;
 	}
 
 	override function render() {
@@ -239,10 +243,12 @@ class Man extends elk.entity.Entity {
 		var levels = PlayState.instance.levels;
 		var shapes : Array<Shape> = [];
 		for (l in levels) {
-			if( l.worldY > y - r ) continue;
-			if( l.worldY + l.pxHei < y + r ) continue;
-			if( l.worldX > x - r ) continue;
-			if( l.worldX + l.pxWid < x + r ) continue;
+			if( l.worldY > y + 40 ) continue;
+			if( l.worldY + l.pxHei < y - 40 ) continue;
+			// if( l.worldY < y + 32 ) continue;
+			// if( l.worldY + l.pxHei > y - 32 ) continue;
+			// if( l.worldX > x - 32 ) continue;
+			// if( l.worldX + l.pxWid < x + 32 ) continue;
 
 			var g = 5;
 			var hg = g >> 1;
@@ -307,6 +313,13 @@ class Man extends elk.entity.Entity {
 		}
 
 		onGround = true;
+
+		var landing = hxd.Res.img.landing.toSprite(par);
+		landing.set_origin(0.5, 1);
+		landing.x = x;
+		landing.y = y + 6;
+		landing.animation.play('pop', false, true);
+		landing.animation.onEnd = (_) -> landing.remove();
 
 		if( speed >= c.TerminalVel ) {
 			die();
@@ -458,7 +471,7 @@ class Man extends elk.entity.Entity {
 				endingStoop();
 				var toEase = vy * (stoopPower);
 				vy -= toEase * 1.5;
-				ay -= toEase * 0.9;
+				ay -= toEase * 0.6;
 				vx += toEase * direction;
 			}
 			ay += c.Gravity * extraDown;

@@ -61,7 +61,9 @@ class PlayState extends GameState {
 
 	public static var deaths = 0;
 	public static var playTime = 0.0;
-	public static var runTime = 0.0;
+
+	public var runTime = 0.0;
+
 	public static var candlePositions : Array<{x : Float, y : Float}> = [];
 
 	public var winY = 999999.0;
@@ -89,13 +91,9 @@ class PlayState extends GameState {
 
 		var smallLight = hxd.Res.img.small_light.toTile().center();
 
-		game.console.addCommand('l', '', [], () -> {
-			if( container.filter != null ) container.filter = null;
-			else container.filter = dither;
-		});
-
 		var l = new assets.LDTKProject(hxd.Res.levels.map.entry.getJsonText());
 		objects = new Layers(world);
+		tutorialContainer = new Object(world);
 		for (level in l.all_worlds.Default.levels) {
 			var tileGroup = new TileGroup(hxd.Res.img.tiles.toTile());
 			var tg = level.l_AutoLayer.render(tileGroup);
@@ -124,12 +122,43 @@ class PlayState extends GameState {
 				cao.y = c.worldPixelY;
 			}
 
+			for (w in level.l_Entities.all_FinishLine) {
+				winY = w.worldPixelY;
+			}
+
+			if( deaths < 5 ) for (t in level.l_Entities.all_Tutorial) {
+				tutorial = hxd.Res.img.tutorial.toSprite(tutorialContainer);
+				tutorial.x = t.worldPixelX;
+				tutorial.y = t.worldPixelY;
+				var tutorialMask = hxd.Res.img.tutorial.toSprite();
+				lights.addChild(tutorialMask);
+				tutorial.animation.pause = true;
+				tutorialMask.animation.pause = true;
+				tutorialMask.x = tutorial.x;
+				tutorialMask.y = tutorial.y;
+				tutorial.animation.currentFrameIndex = switch (t.f_TutorialStep) {
+					case TutorialStep0: 0;
+					case TutorialStep1: 1;
+					case TutorialStep2: 2;
+					case TutorialStep3: 3;
+				}
+				tutorialMask.animation.currentFrameIndex = tutorial.animation.currentFrameIndex;
+
+				tutorialMask.alpha = 1.0;
+			}
+
 			for (c in candlePositions) createCandle(c.x, c.y, smallLight);
 
 			for (m in level.l_Entities.all_MusicChange) music_thresholds.push(m);
 		}
 
 		music_thresholds.sort((a, b) -> a.worldPixelY - b.worldPixelY);
+
+		#if debug
+		game.console.addCommand('l', '', [], () -> {
+			if( container.filter != null ) container.filter = null;
+			else container.filter = dither;
+		});
 
 		game.console.addCommand('bias', '', [{name : 'alpha', t : AFloat}], (a) -> {
 			dither.bias = a;
@@ -138,21 +167,13 @@ class PlayState extends GameState {
 		game.console.addCommand('godmode', '', [], (a) -> {
 			man.freeMove = !man.freeMove;
 		});
+		#end
 
 		man = new Man(objects);
 		man.teleport(spawnPoint.worldPixelX, spawnPoint.worldPixelY);
 		lights.addChild(man.light);
 
 		joystick = new Joystick(Left, this);
-
-		tutorialContainer = new Object(world);
-		tutorial = hxd.Res.img.tutorial.toSprite(tutorialContainer);
-		var tutorialMask = hxd.Res.img.tutorial.toSprite();
-		lights.addChild(tutorialMask);
-		tutorial.animation.pause = true;
-		tutorialMask.animation.pause = true;
-
-		tutorialMask.alpha = 0.5;
 
 		// pitch = game.sounds.musicChannel.getEffect(LowPass);
 		pitch = game.sounds.musicChannel.getEffect(Pitch);
@@ -311,7 +332,7 @@ class PlayState extends GameState {
 				var immediate = true;
 				if( curMusic != null ) {
 					var cc = curMusic;
-					cc.fadeTo(0.0, 0.8, () -> cc.stop());
+					cc.fadeTo(0.0, 0.7, () -> cc.stop());
 					immediate = false;
 				}
 				if( immediate ) {
@@ -319,11 +340,13 @@ class PlayState extends GameState {
 				}
 
 				curMusic = playing[musicIndex];
-				curMusic.fadeTo(0.6, immediate ? 0.0 : 1.0);
+				curMusic.fadeTo(0.54, immediate ? 0.0 : 1.0);
 
 				musicIndex++;
 			}
 		}
+
+		if( man.y > winY ) showWin();
 		// lights.alpha += (1 - lights.alpha) * 0.1;
 
 		if( man.dead && man.deadTime > 0.8 && !man.evaporated ) {
@@ -351,5 +374,14 @@ class PlayState extends GameState {
 
 	var winText : Text;
 
-	public function showWin() {}
+	public function showWin() {
+		if( won ) return;
+		won = true;
+		winText = new Text(hxd.Res.fonts.marumonica.toFont(), this);
+		var timeStr = runTime.toTimeString(false);
+		winText.text = 'YOU WON, CONGRATULATIONS!\n Time taken: ${timeStr} \n Tries: ${PlayState.deaths + 1}\nThanks for playing :)';
+		winText.textAlign = Center;
+		winText.y = 24;
+		winText.x = Math.round(game.s2d.width * 0.5);
+	}
 }

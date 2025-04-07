@@ -5,7 +5,7 @@
 -D version = 0.1.1
 
 ## Window
--D windowTitle=LD 57
+-D windowTitle=ONLY GO DOWN
 -D windowSize=1281x720
 # Sets the default color of the scene + html background
 -D backgroundColor=#010d1a

@@ -257,7 +257,7 @@
 					"ExtraDown": 2.5,
 					"Friction": 0.15,
 					"ExtraDownFriction": 0.98,
-					"TerminalVel": 530,
+					"TerminalVel": 500,
 					"DodgeDuration": 0.15,
 					"PerfectDodgeDuration": 0.05,
 					"WallJumpVel": 70,
