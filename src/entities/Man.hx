@@ -31,11 +31,10 @@ class Man extends elk.entity.Entity {
 
 	public var light : Object;
 
+	var bigLight : Bitmap;
 	var spotLight : Bitmap;
 
 	var par : Object;
-
-	var bigLight : Bitmap;
 
 	var aliveTime = 0.0;
 
@@ -83,8 +82,10 @@ class Man extends elk.entity.Entity {
 		light = new Object();
 		bigLight = new Bitmap(hxd.Res.img.light.toTile().center(), light);
 		bigLight.setScale(1.1);
+		bigLight.blendMode = AlphaAdd;
 		spotLight = new Bitmap(hxd.Res.img.light.toTile().center(), bigLight);
 		spotLight.alpha = 0.0;
+		spotLight.blendMode = AlphaAdd;
 		var manLight = new Bitmap(hxd.Res.img.manlight.toTile().center(), light);
 
 		txt = new Text(hxd.Res.fonts.marumonica.toFont(), PlayState.instance);

@@ -5,7 +5,7 @@
 -D version = 0.1.1
 
 ## Window
--D windowTitle=ONLY GO DOWN
+-D windowTitle=GODOWN
 -D windowSize=1281x720
 # Sets the default color of the scene + html background
 -D backgroundColor=#010d1a
@@ -20,7 +20,7 @@
 
 ## Saves
 # Change this to a unique identifier for your game
--D save_namespace=jefvel.ld57
+-D save_namespace=jefvel.GODOWN
 
 ## HTML/Js Specific values
 # Twitter card

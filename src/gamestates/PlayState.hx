@@ -136,6 +136,7 @@ class PlayState extends GameState {
 			game.sounds.musicChannel.addEffect(pitch);
 		}
 		pitch.value = 1.0;
+		lights.blendMode = Add;
 		// pitch.gainHF = 1.0;
 
 		// connect();
@@ -169,6 +170,7 @@ class PlayState extends GameState {
 			levelTiles.addChild(tg);
 			for (l in level.l_Entities.all_Light) {
 				var li = new Bitmap(smallLight, levelLights);
+				li.blendMode = AlphaAdd;
 				li.x = l.worldPixelX;
 				li.y = l.worldPixelY;
 				var c = hxd.Res.img.candle.toSprite(objects);
@@ -322,6 +324,7 @@ class PlayState extends GameState {
 	public function createCandle(x : Float, y : Float, ?t : Tile) {
 		var smallLight = t != null ? t : hxd.Res.img.small_light.toTile().center();
 		var li = new Bitmap(smallLight, lights);
+		li.blendMode = AlphaAdd;
 		li.x = x;
 		li.y = y;
 		var c = hxd.Res.img.candle.toSprite(objects);
