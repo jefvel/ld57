@@ -29,6 +29,8 @@ class PlayState extends GameState {
 
 	public var container = new Object();
 	public var world = new Object();
+	public var levelTiles = new Object();
+	public var bgLayer = new Object();
 	public var objects : Layers;
 
 	public static var host : elk.net.Client;
@@ -41,6 +43,7 @@ class PlayState extends GameState {
 	var dither : DitherMask;
 	var bg : Bitmap;
 	var lights : Object;
+	var levelLights : Object = new Object();
 
 	var tutorialContainer : Object;
 	var tutorial : Sprite;
@@ -71,6 +74,8 @@ class PlayState extends GameState {
 	override function on_enter() {
 		instance = this;
 
+		world.addChild(bgLayer);
+		world.addChild(levelTiles);
 		container.addChild(world);
 
 		bg = new Bitmap(Tile.fromColor(0x000000), this);
@@ -78,25 +83,74 @@ class PlayState extends GameState {
 		bg.height = game.s2d.height;
 
 		lights = new Object(world);
+		lights.addChild(levelLights);
 
 		dither = new DitherMask(lights);
 		dither.bias = 1;
 		dither.smoothAlpha = true;
 
 		addChild(container);
-		// lights.visible = false;
 		container.filter = dither; // new h2d.filter.Nothing();
+		this.filter = new elk.graphics.filter.RetroFilter(1.5, 0.2, 0.01);
 
 		camera = game.s2d.camera;
 
-		var smallLight = hxd.Res.img.small_light.toTile().center();
-
-		var l = new assets.LDTKProject(hxd.Res.levels.map.entry.getJsonText());
 		objects = new Layers(world);
 		tutorialContainer = new Object(world);
+
+		loadMap();
+
+		#if debug
+		hxd.Res.levels.map.watch(() -> {
+			loadMap();
+		});
+
+		game.console.addCommand('l', '', [], () -> {
+			if( container.filter != null ) container.filter = null;
+			else container.filter = dither;
+		});
+
+		game.console.addCommand('bias', '', [{name : 'alpha', t : AFloat}], (a) -> {
+			dither.bias = a;
+		});
+
+		game.console.addCommand('godmode', '', [], (a) -> {
+			man.freeMove = !man.freeMove;
+		});
+		#end
+
+		man = new Man(objects);
+		man.teleport(spawnPoint.worldPixelX, spawnPoint.worldPixelY);
+
+		lights.addChild(man.light);
+
+		joystick = new Joystick(Left, this);
+
+		// pitch = game.sounds.musicChannel.getEffect(LowPass);
+		pitch = game.sounds.musicChannel.getEffect(Pitch);
+		if( pitch == null ) {
+			// pitch = new hxd.snd.effect.LowPass();
+			pitch = new hxd.snd.effect.Pitch(1);
+			game.sounds.musicChannel.addEffect(pitch);
+		}
+		pitch.value = 1.0;
+		// pitch.gainHF = 1.0;
+
+		// connect();
+	}
+
+	function loadMap() {
+		levelTiles.removeChildren();
+		levelLights.removeChildren();
+		bgLayer.removeChildren();
+		levels = [];
+		music_thresholds = [];
+
+		var smallLight = hxd.Res.img.small_light.toTile().center();
+		var l = new assets.LDTKProject(hxd.Res.levels.map.entry.getJsonText());
 		for (level in l.all_worlds.Default.levels) {
-			var tileGroup = new TileGroup(hxd.Res.img.tiles.toTile());
-			var tg = level.l_AutoLayer.render(tileGroup);
+			bgLayer.addChild(level.l_Tiles.render());
+			var tg = level.l_AutoLayer.render();
 			for (e in level.l_Entities.all_SpawnPoint) {
 				spawnPoint = e;
 			}
@@ -104,9 +158,9 @@ class PlayState extends GameState {
 
 			tg.x = level.worldX;
 			tg.y = level.worldY;
-			world.addChild(tg);
+			levelTiles.addChild(tg);
 			for (l in level.l_Entities.all_Light) {
-				var li = new Bitmap(smallLight, lights);
+				var li = new Bitmap(smallLight, levelLights);
 				li.x = l.worldPixelX;
 				li.y = l.worldPixelY;
 				var c = hxd.Res.img.candle.toSprite(objects);
@@ -153,39 +207,6 @@ class PlayState extends GameState {
 		}
 
 		music_thresholds.sort((a, b) -> a.worldPixelY - b.worldPixelY);
-
-		#if debug
-		game.console.addCommand('l', '', [], () -> {
-			if( container.filter != null ) container.filter = null;
-			else container.filter = dither;
-		});
-
-		game.console.addCommand('bias', '', [{name : 'alpha', t : AFloat}], (a) -> {
-			dither.bias = a;
-		});
-
-		game.console.addCommand('godmode', '', [], (a) -> {
-			man.freeMove = !man.freeMove;
-		});
-		#end
-
-		man = new Man(objects);
-		man.teleport(spawnPoint.worldPixelX, spawnPoint.worldPixelY);
-		lights.addChild(man.light);
-
-		joystick = new Joystick(Left, this);
-
-		// pitch = game.sounds.musicChannel.getEffect(LowPass);
-		pitch = game.sounds.musicChannel.getEffect(Pitch);
-		if( pitch == null ) {
-			// pitch = new hxd.snd.effect.LowPass();
-			pitch = new hxd.snd.effect.Pitch(1);
-			game.sounds.musicChannel.addEffect(pitch);
-		}
-		pitch.value = 1.0;
-		// pitch.gainHF = 1.0;
-
-		// connect();
 	}
 
 	var pitch : Pitch;
