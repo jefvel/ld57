@@ -40,6 +40,7 @@ class DitherShader extends h3d.shader.ScreenShader {
 			if( lum * 1.02 < threshold.r + bias ) {
 				pixelColor.rgb = vec3(0);
 			}
+			pixelColor.rgb *= k.rgb;
 
 			// pixelColor.r += no;
 		}

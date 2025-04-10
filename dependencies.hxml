@@ -11,7 +11,7 @@
 --library hscript
 --library hxbit:git:https://github.com/jefvel/hxbit.git
 --library format:git:https://github.com/HaxeFoundation/format.git
---library stb_ogg_sound
+--library stb_ogg_sound:git:https://github.com/jefvel/haxe_stb_ogg_sound.git
 
 --library heaps:git:https://github.com/jefvel/heaps.git#jefvel-branch
 --library elk:git:https://github.com/jefvel/elk.git

@@ -35,6 +35,8 @@ class PlayState extends GameState {
 
 	public static var host : elk.net.Client;
 
+	var timeText : Text;
+
 	var spawnPoint : assets.LDTKProject.Entity_SpawnPoint;
 	var man : Man;
 
@@ -137,7 +139,13 @@ class PlayState extends GameState {
 		// pitch.gainHF = 1.0;
 
 		// connect();
+		ui = new Object(this);
+		timeText = new Text(hxd.Res.fonts.marumonica.toFont(), ui);
+		timeText.x = 12;
+		timeText.y = 10;
 	}
+
+	var ui : Object;
 
 	function loadMap() {
 		levelTiles.removeChildren();
@@ -347,6 +355,10 @@ class PlayState extends GameState {
 			runTime += dt;
 		}
 
+		if( runTime > 0 ) {
+			timeText.text = runTime.toTimeString();
+		}
+
 		var thr = music_thresholds[musicIndex];
 		if( thr != null ) {
 			if( thr.worldPixelY < man.y ) {
@@ -390,6 +402,9 @@ class PlayState extends GameState {
 
 	public function onDie() {
 		stopMusic();
+		var save = SaveData.getCurrent();
+		save.deaths++;
+		save.save();
 		deaths++;
 	}
 
