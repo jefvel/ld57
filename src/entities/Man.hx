@@ -18,8 +18,18 @@ import gamestates.PlayState;
 import h2d.Object;
 import elk.graphics.Sprite;
 
+enum State {
+	Idle;
+	Dashing;
+	Falling;
+	Dodging;
+	Dead;
+}
+
 class Man extends elk.entity.Entity {
 	var sprite : Sprite;
+
+	public var state : State = Idle;
 
 	var direction = 1;
 
@@ -430,7 +440,7 @@ class Man extends elk.entity.Entity {
 
 		var speed = Math.sqrt(vx * vx + vy * vy);
 		var lethal = speed > c.TerminalVel;
-		txt.text = '${Math.round(speed)}, $lethal,\nvx: ${vx}\nvy: ${vy}\n${stoopPower}';
+		txt.text = '${Math.round(speed)}, $lethal,\nvx: ${Math.round(vx)}\nvy: ${Math.round(vy)}\n${Math.round(stoopPower)}';
 
 		vx *= fric;
 		vy *= fric;
@@ -476,7 +486,7 @@ class Man extends elk.entity.Entity {
 
 		if( !onGround ) {
 			var extraDown = 1.0;
-			if( isPressed ) {
+			if( isPressed && timeSinceJump > 0.1 ) {
 				extraDown = c.ExtraDown;
 				vx *= c.ExtraDownFriction;
 				if( vy > 100 ) {
