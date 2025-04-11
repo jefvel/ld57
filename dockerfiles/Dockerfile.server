@@ -2,6 +2,9 @@ FROM haxe AS builder
 
 WORKDIR /
 
+RUN apt-get update && \
+    apt-get install -y vorbis-tools
+
 COPY *.hxml /
 
 RUN haxelib install dependencies.hxml --always --quiet --skip-dependencies
