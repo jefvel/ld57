@@ -13,8 +13,6 @@
 -lib differ
 -lib elk
 
--lib stb_ogg_sound
-
 -lib echo
 -D ECHO_USE_HEAPS
 

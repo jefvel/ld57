@@ -1,6 +1,8 @@
 -D hot-reload
 -D hot_reload
 
+-lib stb_ogg_sound
+
 build-sdl.hxml
 
 #-D use_pak

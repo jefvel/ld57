@@ -1,5 +1,7 @@
 _base.hxml
 
+-lib stb_ogg_sound
+
 -cp src
 -main Main
 

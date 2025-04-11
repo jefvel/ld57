@@ -3,6 +3,8 @@ _base.hxml
 -cp src
 -main Main
 
+-lib stb_ogg_sound
+
 -lib hlopenal
 -lib hldx
 
