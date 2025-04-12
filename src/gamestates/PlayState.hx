@@ -1,5 +1,6 @@
 package gamestates;
 
+import hxd.res.Sound;
 import hxd.snd.effect.LowPass;
 import hxd.snd.effect.Pitch;
 import h2d.TileGroup;
@@ -51,16 +52,7 @@ class PlayState extends GameState {
 	var tutorial : Sprite;
 
 	var musicIndex = 0;
-	var musics = [
-		hxd.Res.music.music1,
-		hxd.Res.music.music2,
-		hxd.Res.music.music3,
-		hxd.Res.music.music4,
-		hxd.Res.music.music5,
-	];
-
 	var music_thresholds : Array<assets.LDTKProject.Entity_MusicChange> = [];
-	var playing : Array<hxd.snd.Channel> = [];
 
 	public var levels : Array<assets.LDTKProject.LDTKProject_Level> = [];
 
@@ -148,6 +140,8 @@ class PlayState extends GameState {
 
 	var ui : Object;
 
+	var project : assets.LDTKProject;
+
 	function loadMap() {
 		levelTiles.removeChildren();
 		levelLights.removeChildren();
@@ -157,6 +151,7 @@ class PlayState extends GameState {
 
 		var smallLight = hxd.Res.img.small_light.toTile().center();
 		var l = new assets.LDTKProject(hxd.Res.levels.map.entry.getJsonText());
+		project = l;
 		for (level in l.all_worlds.Default.levels) {
 			bgLayer.addChild(level.l_Tiles.render());
 			var tg = level.l_AutoLayer.render();
@@ -349,6 +344,45 @@ class PlayState extends GameState {
 
 	public var won = false;
 
+	function handleMusic() {
+		var thr = music_thresholds[musicIndex];
+		if( thr != null ) {
+			if( thr.worldPixelY < man.y ) {
+				musicIndex++;
+
+				var immediate = thr.f_Immediate;
+				var musicPos = 0.0;
+				if( curMusic != null ) {
+					musicPos = curMusic.position;
+					var cc = curMusic;
+					if( immediate ) {
+						cc.stop();
+					} else {
+						cc.fadeTo(0.0, 0.7, () -> cc.stop());
+					}
+				}
+
+				curMusic = null;
+
+				if( thr.f_Music == null ) {
+					return;
+				}
+
+				var musicResPath = project.makeAssetRelativePath(thr.f_Music);
+				var musicRes = hxd.Res.loader.loadCache(musicResPath, Sound);
+				var music = musicRes.play(true, 0.0, game.sounds.musicChannel);
+				music.position = musicPos;
+
+				curMusic = music;
+				if( immediate ) {
+					curMusic.volume = thr.f_Volume;
+				} else {
+					curMusic.fadeTo(thr.f_Volume, 0.8);
+				}
+			}
+		}
+	}
+
 	override function tick(dt : Float) {
 		elapsed += dt;
 		event.update(dt);
@@ -358,28 +392,10 @@ class PlayState extends GameState {
 			runTime += dt;
 		}
 
+		handleMusic();
+
 		if( runTime > 0 ) {
 			timeText.text = runTime.toTimeString();
-		}
-
-		var thr = music_thresholds[musicIndex];
-		if( thr != null ) {
-			if( thr.worldPixelY < man.y ) {
-				var immediate = true;
-				if( curMusic != null ) {
-					var cc = curMusic;
-					cc.fadeTo(0.0, 0.7, () -> cc.stop());
-					immediate = false;
-				}
-				if( immediate ) {
-					for (m in musics) playing.push(m.play(true, 0.0, game.sounds.musicChannel));
-				}
-
-				curMusic = playing[musicIndex];
-				curMusic.fadeTo(0.54, immediate ? 0.0 : 1.0);
-
-				musicIndex++;
-			}
 		}
 
 		if( man.y > winY ) showWin();
@@ -400,7 +416,7 @@ class PlayState extends GameState {
 	}
 
 	function stopMusic() {
-		for (m in musics) m.stop();
+		curMusic?.stop();
 	}
 
 	public function onDie() {

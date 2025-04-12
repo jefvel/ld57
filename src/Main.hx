@@ -21,6 +21,10 @@ class Main extends elk.Elk {
 			preloader = new PreloaderState();
 			app.states.change(preloader);
 		}
+
+		hxd.fs.SourceLoader.initLivePaths();
+		hxd.fs.SourceLoader.addLivePath('src');
+		hxd.fs.SourceLoader.addLivePathHaxelib(['heaps', 'elk']);
 	}
 
 	override public function on_load_progress(p : Float) {

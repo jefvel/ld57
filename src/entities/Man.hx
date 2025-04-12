@@ -90,6 +90,7 @@ class Man extends elk.entity.Entity {
 		sprite.animation.play("idle");
 
 		light = new Object();
+		light.scale(1.5);
 		bigLight = new Bitmap(hxd.Res.img.light.toTile().center(), light);
 		bigLight.setScale(1.1);
 		bigLight.blendMode = AlphaAdd;

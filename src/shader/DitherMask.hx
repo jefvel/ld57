@@ -1,5 +1,7 @@
 package shader;
 
+import h3d.shader.ScreenShader;
+import h3d.shader.NoiseLib;
 import h3d.Vector;
 import h3d.mat.Texture;
 import h2d.RenderContext;
@@ -20,6 +22,8 @@ class DitherMask extends AbstractMask {
 
 	public function new(mask, maskVisible = false, smoothAlpha = false) {
 		super(mask);
+		new ScreenShader();
+		new NoiseLib();
 		pass = new h3d.pass.ScreenFx(new DitherShader());
 		this.maskVisible = maskVisible;
 		this.smoothAlpha = smoothAlpha;
