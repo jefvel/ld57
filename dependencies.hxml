@@ -1,6 +1,6 @@
 --library deepnightLibs:git:https://github.com/deepnight/deepnightLibs.git
 --library redistHelper:git:https://github.com/jefvel/redistHelper.git
---library ldtk-haxe-api:1.5.3-rc.1
+--library ldtk-haxe-api:git:https://github.com/jefvel/ldtk-haxe-api.git#jefvel
 --library ase:git:https://github.com/miriti/ase.git
 --library newgrounds
 --library differ

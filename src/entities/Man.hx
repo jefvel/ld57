@@ -101,14 +101,12 @@ class Man extends elk.entity.Entity {
 
 		txt = new Text(hxd.Res.fonts.marumonica.toFont(), PlayState.instance);
 		txt.x = 40;
-
-		// txt.visible = false;
 	}
 
 	override function render() {
 		super.render();
-		obj.x = interpX;
-		obj.y = interpY;
+		obj.x = Math.round(interpX);
+		obj.y = Math.round(interpY);
 		light.x = obj.x;
 		light.y = obj.y;
 		var globPos = obj.localToGlobal();
@@ -188,7 +186,7 @@ class Man extends elk.entity.Entity {
 			var col = findCloseTiles(rx, ry, dodging ? 10 : 8);
 			if( col == null ) continue;
 
-			if( onGround ) break;
+			// if( onGround ) break;
 
 			if( col.unitVectorY < -0.5 ) {
 				vy *= 0.8;
@@ -210,9 +208,6 @@ class Man extends elk.entity.Entity {
 
 			rx += col.separationX;
 			ry += col.separationY;
-
-			// vx -= col.unitVectorX * speed * 0.1;
-			// vy -= col.unitVectorY * speed * 0.1;
 
 			if( Math.abs(col.unitVectorX) > 0.7 && Math.abs(vx) > 0.9 && timeSinceJump > 0.05 ) {
 				x = rx;
@@ -320,6 +315,8 @@ class Man extends elk.entity.Entity {
 	var sideSquish = EasedFloat.elastic(0, 0.4);
 
 	function land(landX : Float, landY : Float, speed : Float) {
+		if( onGround ) return;
+
 		x = landX;
 		y = landY;
 
@@ -379,7 +376,6 @@ class Man extends elk.entity.Entity {
 	}
 
 	function moveAndSlide(dx : Float, dy : Float) {
-		if( onGround ) return;
 		collCheck(dx, dy);
 	}
 
@@ -397,7 +393,7 @@ class Man extends elk.entity.Entity {
 			var r = 100.0;
 
 			var cr = r * r;
-			var xx = Math.abs(vy) > c.TerminalVel * 0.9 ? 60 : 20;
+			var xx = Math.abs(vy) > c.TerminalVel * 0.9 ? 40 : 20;
 			var yy = Math.abs(vy) > c.TerminalVel ? 80 : 40;
 			for (c in PlayState.candlePositions) {
 				if( c.y < y ) continue;
@@ -485,8 +481,8 @@ class Man extends elk.entity.Entity {
 
 		stoopPower *= 0.9;
 
+		var extraDown = 1.0;
 		if( !onGround ) {
-			var extraDown = 1.0;
 			if( isPressed && timeSinceJump > 0.1 ) {
 				extraDown = c.ExtraDown;
 				vx *= c.ExtraDownFriction;
@@ -501,11 +497,11 @@ class Man extends elk.entity.Entity {
 				ay -= toEase * 0.1;
 				vx += toEase * direction;
 			}
-
-			ay += c.Gravity * extraDown;
 		} else {
 			endingStoop();
 		}
+
+		ay += c.Gravity * extraDown;
 
 		vx = vx.clamp(-c.MaxSpeed, c.MaxSpeed);
 		vy = vy.clamp(-c.MaxSpeedV, c.MaxSpeedV);

@@ -1,4 +1,4 @@
-FROM haxe AS builder
+FROM jefvel/hashlink-haxe AS builder
 
 WORKDIR /
 
