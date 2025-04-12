@@ -23,6 +23,7 @@ enum State {
 	Dashing;
 	Falling;
 	Dodging;
+	Sliding;
 	Dead;
 }
 
@@ -53,9 +54,6 @@ class Man extends elk.entity.Entity {
 	var c : elk.castle.CastleDB.Character;
 
 	var timeSinceJump = 0.0;
-
-	var lastX = 0.0;
-	var lastY = 0.0;
 
 	var dodge : Sprite;
 	var dodging = true;
@@ -130,7 +128,7 @@ class Man extends elk.entity.Entity {
 
 	public var freeMove = false;
 
-	public function dash() {
+	public function processPress() {
 		if( !onGround ) {
 			doDodge();
 			return;
@@ -158,8 +156,8 @@ class Man extends elk.entity.Entity {
 	}
 
 	public function teleport(_x, _y) {
-		x = lastX = _x;
-		y = lastY = _y;
+		x = _x;
+		y = _y;
 	}
 
 	function hitWall() {}
@@ -179,6 +177,8 @@ class Man extends elk.entity.Entity {
 		var speed = Math.sqrt(vx * vx + vy * vy);
 		var startVy = vy;
 
+		var touchingGround = false;
+
 		for (i in 0...checkCount) {
 			rx += dx;
 			ry += dy;
@@ -186,19 +186,21 @@ class Man extends elk.entity.Entity {
 			var col = findCloseTiles(rx, ry, dodging ? 10 : 8);
 			if( col == null ) continue;
 
-			// if( onGround ) break;
+			rx += col.separationX;
+			ry += col.separationY;
 
 			if( col.unitVectorY < -0.5 ) {
 				vy *= 0.8;
 				ay *= 0.8;
 			}
 
-			if( vy > 0 ) {
-				if( col.unitVectorY <= -0.91 ) {
-					land(rx + col.separationX, ry + col.separationY, Math.abs(startVy));
+			if( col.unitVectorY <= -0.91 ) {
+				touchingGround = true;
+			}
 
-					lastX = x;
-					lastY = y;
+			if( vy > 0 && state != Sliding ) {
+				if( col.unitVectorY <= -0.91 ) {
+					land(rx, ry, Math.abs(startVy));
 					return;
 				}
 			} else if( col.unitVectorY > 0.9 ) {
@@ -206,10 +208,7 @@ class Man extends elk.entity.Entity {
 				if( ay < 0 ) ay *= -0.9;
 			}
 
-			rx += col.separationX;
-			ry += col.separationY;
-
-			if( Math.abs(col.unitVectorX) > 0.7 && Math.abs(vx) > 0.9 && timeSinceJump > 0.05 ) {
+			if( vx * col.unitVectorX < 0 && Math.abs(col.unitVectorX) > 0.7 && Math.abs(vx) > 0.9 && timeSinceJump > 0.05 ) {
 				x = rx;
 				y = ry;
 				direction = -direction;
@@ -226,6 +225,12 @@ class Man extends elk.entity.Entity {
 			}
 
 			break;
+		}
+
+		onGround = touchingGround;
+
+		if( state == Sliding && !touchingGround ) {
+			stopSliding();
 		}
 
 		x = rx;
@@ -320,22 +325,6 @@ class Man extends elk.entity.Entity {
 		x = landX;
 		y = landY;
 
-		if( dodging ) {
-			dodging = false;
-
-			dodge.animation.play("dodge", false, true);
-			dodge.visible = true;
-			Elk.instance.sounds.playWobble(hxd.Res.sound.hit, 0.4);
-			vy = -c.DashJumpVel * 0.2;
-			ay = 0;
-			ax = 0;
-			vx = c.DashJumpVel * direction;
-			PlayState.instance.freeze(0.15);
-			return;
-		}
-
-		onGround = true;
-
 		var landing = hxd.Res.img.landing.toSprite(par);
 		landing.set_origin(0.5, 1);
 		landing.x = x;
@@ -343,19 +332,85 @@ class Man extends elk.entity.Entity {
 		landing.animation.play('pop', false, true);
 		landing.animation.onEnd = (_) -> landing.remove();
 
+		if( dodging ) {
+			dodging = false;
+
+			dodge.animation.play("dodge", false, true);
+			dodge.visible = true;
+
+			Elk.instance.sounds.playWobble(hxd.Res.sound.hit, 0.4);
+			vy = -c.DashJumpVel * 0.2;
+			ay = 0;
+			ax *= 0.2;
+
+			var newVx = Math.max(Math.abs(vx * 0.7), c.DashJumpVel);
+
+			vx = (newVx * M.sign(vx));
+
+			PlayState.instance.freeze(0.15);
+			return;
+		}
+
+		onGround = true;
+
 		if( speed >= c.TerminalVel ) {
 			die();
-		} else {
-			sprite.animation.play('idle');
-			squish.setImmediate(0.5 - Math.random() * 0.1);
-			squish.value = 1.0;
-			Elk.instance.sounds.playWobble(hxd.Res.sound.land, 0.2);
+			return;
 		}
+
+		squish.setImmediate(0.5 - Math.random() * 0.1);
+		squish.value = 1.0;
+		Elk.instance.sounds.playWobble(hxd.Res.sound.land, 0.2);
+
+		if( dashDown() ) {
+			startSliding();
+			return;
+		}
+
+		sprite.animation.play('idle');
 
 		vx = 0;
 		vy = 0;
 		ax = 0;
 		ay = 0;
+	}
+
+	var slideSound : hxd.snd.Channel;
+
+	function startSliding() {
+		state = Sliding;
+		if( slideSound != null ) slideSound.stop();
+		slideSound = elk.Elk.instance.sounds.playWobble(hxd.Res.sound.slide, 0.2, 0.05, true);
+		sprite.animation.play('slide_h', true, true);
+		var slideYPow = Math.min(Math.abs(vy * 0.6), 200);
+		if( Math.abs(vx) < (slideYPow) ) {
+			vx = vx > 0 ? (slideYPow) : -(slideYPow);
+		}
+		vy = 0;
+		ay = 0;
+		ax = 0;
+		trace('started sldign');
+	}
+
+	function stopSliding() {
+		if( slideSound != null ) slideSound.stop();
+		slideSound = null;
+		state = Idle;
+		squish.setImmediate(1.2 + Math.random() * 0.1);
+		squish.value = 1.0;
+		if( onGround && !dashDown() ) {
+			processPress();
+		}
+	}
+
+	function processSlide(dt : Float) {
+		if( state != Sliding ) return;
+		var fricMult = state == Sliding ? 2.0 : 0.0;
+		var fric = 1 / (1 + (dt * fricMult));
+		vx *= fric;
+		if( !dashDown() || Math.abs(vx) < 30 ) {
+			stopSliding();
+		}
 	}
 
 	public var dead = false;
@@ -375,25 +430,29 @@ class Man extends elk.entity.Entity {
 		deadTime += dt;
 	}
 
-	function moveAndSlide(dx : Float, dy : Float) {
-		collCheck(dx, dy);
+	function processMove(dt : Float) {
+		var fric = 1 / (1 + (dt * c.Friction));
+
+		vx += ax * dt;
+		vy += ay * dt;
+
+		collCheck(vx * dt, vy * dt);
+
+		vx *= fric;
+		vy *= fric;
+
+		ax *= fric;
+		ay *= fric;
 	}
 
-	public function processMove(dt : Float) {}
-
-	public override function tick(dt : Float) {
-		if( dead ) {
-			processDead(dt);
-			return;
-		};
-
+	public function processSlowdown(dt : Float) {
 		var shouldSlowdown = false;
-		if( vy > c.TerminalVel * 0.6 ) {
+		if( vy > c.TerminalVel * 0.95 ) {
 			var closeToCandle = false;
 			var r = 100.0;
 
 			var cr = r * r;
-			var xx = Math.abs(vy) > c.TerminalVel * 0.9 ? 40 : 20;
+			var xx = Math.abs(vy) > c.TerminalVel ? 40 : 20;
 			var yy = Math.abs(vy) > c.TerminalVel ? 80 : 40;
 			for (c in PlayState.candlePositions) {
 				if( c.y < y ) continue;
@@ -417,56 +476,58 @@ class Man extends elk.entity.Entity {
 		} else {
 			slowdown.value = 1.0;
 		}
+	}
 
-		var fric = 1 / (1 + (dt * friction));
+	function endDodge() {
+		dodging = false;
+	}
 
-		vx += ax * dt;
-		vy += ay * dt;
+	public override function tick(dt : Float) {
+		if( dead ) {
+			processDead(dt);
+			return;
+		};
 
-		sprite.scaleY = squish.value;
+		var isPressed = dashDown();
+		var justPressed = dashPressed();
+
+		processSlowdown(dt);
+		processSlide(dt);
 
 		if( !freeMove ) {
-			moveAndSlide(vx * dt, vy * dt);
+			processMove(dt);
 		} else {
 			var dd = Input.getVector(Key.A, Key.D, Key.W, Key.S);
 			x += dd.x * 5;
 			y += dd.y * 5;
 		}
 
-		if( dead ) return;
-
 		var speed = Math.sqrt(vx * vx + vy * vy);
-		var lethal = speed > c.TerminalVel;
+		var lethal = vy > c.TerminalVel;
+
 		txt.text = '${Math.round(speed)}, $lethal,\nvx: ${Math.round(vx)}\nvy: ${Math.round(vy)}\n${Math.round(stoopPower)}';
 
-		vx *= fric;
-		vy *= fric;
-
-		ax *= fric;
-		ay *= fric;
-
-		friction = c.Friction;
+		sprite.scaleY = squish.value;
 
 		timeSinceDodge += dt;
 		dodgeCooldown -= dt;
 		if( timeSinceDodge > c.DodgeDuration ) {
-			dodging = false;
+			endDodge();
 		}
-
-		var isPressed = dashDown();
-		var justPressed = dashPressed();
 
 		aliveTime += dt;
 		if( aliveTime < 0.2 ) return;
 
 		if( justPressed ) {
-			dash();
+			processPress();
 		}
 
 		sprite.scaleX = direction * (1 + sideSquish.value);
 
-		if( !onGround ) {
-			if( vy > c.TerminalVel ) {
+		if( dead ) {
+			sprite.animation.play("dead");
+		} else if( !onGround ) {
+			if( lethal ) {
 				sprite.animation.play("fall");
 			} else {
 				if( dodging && timeSinceDodge < c.DodgeDuration ) {} else if( isPressed && vy > 0.1 ) {
@@ -474,10 +535,13 @@ class Man extends elk.entity.Entity {
 				} else sprite.animation.play("dash");
 			}
 			timeSinceJump += dt;
+		} else {
+			if( state == Sliding ) {
+				sprite.animation.play('slide_h');
+			} else {
+				sprite.animation.play('idle');
+			}
 		}
-
-		lastX = x;
-		lastY = y;
 
 		stoopPower *= 0.9;
 
@@ -486,7 +550,7 @@ class Man extends elk.entity.Entity {
 			if( isPressed && timeSinceJump > 0.1 ) {
 				extraDown = c.ExtraDown;
 				vx *= c.ExtraDownFriction;
-				if( vy > 100 ) {
+				if( vy > c.TerminalVel * 0.4 ) {
 					stoopPower += (1 - stoopPower) * 0.05;
 					if( stoopPower > 0.3 ) startingStoop();
 				}
@@ -506,6 +570,10 @@ class Man extends elk.entity.Entity {
 		vx = vx.clamp(-c.MaxSpeed, c.MaxSpeed);
 		vy = vy.clamp(-c.MaxSpeedV, c.MaxSpeedV);
 
+		processLight();
+	}
+
+	function processLight() {
 		var l = Math.sqrt(vx * vx + vy * vy);
 		var ddx = l > 0 ? vx / l : 0;
 		var ddy = l > 0 ? vy / l : 0;

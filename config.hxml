@@ -40,7 +40,7 @@
 ## Network
 ### Comment out if you want to use websockets (for running the game in browsers)
 -D use_websockets
--D local_server
+#-D local_server
 
 #-D hxbit_visibility
 #-D hxbit_host_mt

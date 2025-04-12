@@ -29,6 +29,9 @@ class PlayState extends GameState {
 	public static var instance : PlayState;
 
 	public var container = new Object();
+
+	var visLayer = new Object();
+
 	public var world = new Object();
 	public var levelTiles = new Object();
 	public var bgLayer = new Object();
@@ -83,6 +86,7 @@ class PlayState extends GameState {
 		dither.bias = 1;
 		dither.smoothAlpha = true;
 
+		addChild(visLayer);
 		addChild(container);
 		container.filter = dither; // new h2d.filter.Nothing();
 		this.filter = new elk.graphics.filter.RetroFilter(1.5, 0.2, 0.01);
@@ -153,7 +157,16 @@ class PlayState extends GameState {
 		var l = new assets.LDTKProject(hxd.Res.levels.map.entry.getJsonText());
 		project = l;
 		for (level in l.all_worlds.Default.levels) {
-			bgLayer.addChild(level.l_Tiles.render());
+			var bgTiles = level.l_Tiles.render();
+			bgTiles.x = level.worldX;
+			bgTiles.y = level.worldY;
+			bgLayer.addChild(bgTiles);
+
+			var vis = level.l_VisLay.render();
+			vis.x = level.worldX;
+			vis.y = level.worldY;
+			visLayer.addChild(vis);
+
 			var tg = level.l_AutoLayer.render();
 			for (e in level.l_Entities.all_SpawnPoint) {
 				spawnPoint = e;
@@ -212,6 +225,8 @@ class PlayState extends GameState {
 		}
 
 		music_thresholds.sort((a, b) -> a.worldPixelY - b.worldPixelY);
+
+		// connect();
 	}
 
 	var pitch : Pitch;
@@ -238,7 +253,7 @@ class PlayState extends GameState {
 		// addr = '192.168.0.123';
 
 		#if !local_server
-		addr = 'gameserver.jefvel.net/server';
+		addr = 'godownserver.jefvel.net';
 		useTLS = true;
 		#end
 
@@ -296,6 +311,7 @@ class PlayState extends GameState {
 		var camY = (-manY + h);
 		dither.offset.set(-camX, -camY);
 		world.setPosition(camX, camY);
+		visLayer.setPosition(camX, camY);
 	}
 
 	public function reset() {
