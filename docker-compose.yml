@@ -15,7 +15,7 @@ services:
         - action: rebuild
           path: src
     ports:
-      - '9999:9998'
+      - '9998:9999'
     volumes:
       - server_data:/server/data/:rw
 
