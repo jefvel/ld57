@@ -2,7 +2,7 @@ services:
   server:
     platform: linux/amd64
     image: hl-server
-    build: 
+    build:
       context: .
       dockerfile: dockerfiles/Dockerfile.server
     restart: unless-stopped
@@ -15,7 +15,7 @@ services:
         - action: rebuild
           path: src
     ports:
-      - '9999:9999'
+      - '9999:9998'
     volumes:
       - server_data:/server/data/:rw
 
