@@ -9,10 +9,6 @@ COPY *.hxml /
 
 RUN haxelib install dependencies.hxml --always --quiet --skip-dependencies
 
-#COPY haxe_libraries /haxe_libraries
-#COPY .haxerc /
-#RUN lix download
-
 COPY res /res/
 COPY res/db /res/db/
 COPY res/data.cdb /res/
