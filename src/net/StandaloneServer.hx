@@ -23,6 +23,7 @@ class StandaloneServer extends elk.Elk {
 		if( port_str != null ) {
 			bind_port = Std.parseInt(port_str);
 		}
+		trace('trying to run on port $bind_port');
 
 		server = new elk.net.Server(bind_address, bind_port, 100, true);
 		handler = new MultiplayerHandler(server.host);
