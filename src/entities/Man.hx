@@ -1,22 +1,19 @@
 package entities;
 
-import elk.M;
-import elk.util.EasedFloat;
-import elk.Elk;
-import hxd.res.DefaultFont;
-import h2d.Text;
-import elk.Timeout;
-import elk.Process;
-import hxd.Key;
-import differ.shapes.Shape;
-import differ.shapes.Circle;
 import differ.Collision;
+import differ.shapes.Circle;
+import differ.shapes.Shape;
+import elk.Elk;
+import elk.M;
+import elk.graphics.Sprite;
 import elk.input.Input;
+import elk.util.EasedFloat;
+import gamestates.PlayState;
 import h2d.Bitmap;
 import h2d.Graphics;
-import gamestates.PlayState;
 import h2d.Object;
-import elk.graphics.Sprite;
+import h2d.Text;
+import hxd.Key;
 
 enum State {
 	Idle;
@@ -99,6 +96,8 @@ class Man extends elk.entity.Entity {
 
 		txt = new Text(hxd.Res.fonts.marumonica.toFont(), PlayState.instance);
 		txt.x = 40;
+
+		PlayState.instance.debug.addRange('slideEnd', slideEndMultiplier, (f) -> slideEndMultiplier = f, 0.0, 1.0);
 	}
 
 	override function render() {
@@ -121,7 +120,7 @@ class Man extends elk.entity.Entity {
 		dodging = true;
 		sprite.animation.play('air_roll', false, true);
 		timeSinceDodge = 0;
-		dodgeCooldown = 0.4;
+		dodgeCooldown = 0.6;
 
 		Elk.instance.sounds.playWobble(hxd.Res.sound.dodge, 0.4);
 	}
@@ -257,8 +256,7 @@ class Man extends elk.entity.Entity {
 		Elk.instance.sounds.playWobble(hxd.Res.sound.hit, 0.4);
 
 		PlayState.instance.freeze(0.12);
-		dodgeCooldown = 0.0;
-		dodging = false;
+		resetDodge();
 
 		sideSquish.setImmediate(-Math.random() * 0.2 - 0.4);
 		sideSquish.value = 0.0;
@@ -317,6 +315,11 @@ class Man extends elk.entity.Entity {
 		return closest;
 	}
 
+	function resetDodge() {
+		dodging = false;
+		dodgeCooldown = 0.0;
+	}
+
 	var sideSquish = EasedFloat.elastic(0, 0.4);
 
 	function land(landX : Float, landY : Float, speed : Float) {
@@ -333,17 +336,17 @@ class Man extends elk.entity.Entity {
 		landing.animation.onEnd = (_) -> landing.remove();
 
 		if( dodging ) {
-			dodging = false;
+			resetDodge();
 
 			dodge.animation.play("dodge", false, true);
 			dodge.visible = true;
 
 			Elk.instance.sounds.playWobble(hxd.Res.sound.hit, 0.4);
-			vy = -c.DashJumpVel * 0.2;
+			vy = -c.DashJumpVel * 0.4;
 			ay = 0;
 			ax *= 0.2;
 
-			var newVx = Math.max(Math.abs(vx * 0.7), c.DashJumpVel);
+			var newVx = Math.max(Math.min(Math.abs(vx * 0.7), c.DashJumpVel * 1.2), c.DashJumpVel);
 
 			vx = (newVx * M.sign(vx));
 
@@ -367,8 +370,6 @@ class Man extends elk.entity.Entity {
 			return;
 		}
 
-		sprite.animation.play('idle');
-
 		vx = 0;
 		vy = 0;
 		ax = 0;
@@ -376,9 +377,11 @@ class Man extends elk.entity.Entity {
 	}
 
 	var slideSound : hxd.snd.Channel;
+	var slideTime = 0.0;
 
 	function startSliding() {
 		state = Sliding;
+		slideTime = 0.0;
 		if( slideSound != null ) slideSound.stop();
 		slideSound = elk.Elk.instance.sounds.playWobble(hxd.Res.sound.slide, 0.2, 0.05, true);
 		sprite.animation.play('slide_h', true, true);
@@ -392,19 +395,26 @@ class Man extends elk.entity.Entity {
 		trace('started sldign');
 	}
 
+	var slideEndMultiplier = 0.1;
+
 	function stopSliding() {
 		if( slideSound != null ) slideSound.stop();
 		slideSound = null;
 		state = Idle;
 		squish.setImmediate(1.2 + Math.random() * 0.1);
 		squish.value = 1.0;
-		if( onGround && !dashDown() ) {
+		vx *= slideEndMultiplier;
+		ax *= slideEndMultiplier;
+		if( onGround && !dashDown() && slideTime > 0.1 ) {
 			processPress();
+		} else {
+			vx *= 0.1;
 		}
 	}
 
 	function processSlide(dt : Float) {
 		if( state != Sliding ) return;
+		slideTime += dt;
 		var fricMult = state == Sliding ? 2.0 : 0.0;
 		var fric = 1 / (1 + (dt * fricMult));
 		vx *= fric;
@@ -443,6 +453,13 @@ class Man extends elk.entity.Entity {
 
 		ax *= fric;
 		ay *= fric;
+
+		/*
+			if( onGround && state != Sliding ) {
+				ax *= 0.1;
+				vx *= 0.1;
+			}
+		 */
 	}
 
 	public function processSlowdown(dt : Float) {
@@ -482,6 +499,12 @@ class Man extends elk.entity.Entity {
 		dodging = false;
 	}
 
+	override function remove() {
+		super.remove();
+		if( slideSound != null ) slideSound.stop();
+		slideSound = null;
+	}
+
 	public override function tick(dt : Float) {
 		if( dead ) {
 			processDead(dt);
@@ -493,6 +516,10 @@ class Man extends elk.entity.Entity {
 
 		processSlowdown(dt);
 		processSlide(dt);
+
+		if( justPressed ) {
+			processPress();
+		}
 
 		if( !freeMove ) {
 			processMove(dt);
@@ -517,10 +544,6 @@ class Man extends elk.entity.Entity {
 
 		aliveTime += dt;
 		if( aliveTime < 0.2 ) return;
-
-		if( justPressed ) {
-			processPress();
-		}
 
 		sprite.scaleX = direction * (1 + sideSquish.value);
 

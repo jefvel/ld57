@@ -1,5 +1,6 @@
 package gamestates;
 
+import ui.DebugUI;
 import hxd.res.Sound;
 import hxd.snd.effect.LowPass;
 import hxd.snd.effect.Pitch;
@@ -68,8 +69,20 @@ class PlayState extends GameState {
 
 	public var winY = 999999.0;
 
+	public var debug : DebugUI;
+
+	var ui : Object;
+
+	var project : assets.LDTKProject;
+
 	override function on_enter() {
 		instance = this;
+
+		ui = new Object();
+
+		debug = new DebugUI(ui);
+		debug.x = 12;
+		debug.y = 32;
 
 		world.addChild(bgLayer);
 		world.addChild(levelTiles);
@@ -136,15 +149,12 @@ class PlayState extends GameState {
 		// pitch.gainHF = 1.0;
 
 		// connect();
-		ui = new Object(this);
 		timeText = new Text(hxd.Res.fonts.marumonica.toFont(), ui);
 		timeText.x = 12;
 		timeText.y = 10;
+
+		addChild(ui);
 	}
-
-	var ui : Object;
-
-	var project : assets.LDTKProject;
 
 	function loadMap() {
 		levelTiles.removeChildren();
@@ -323,6 +333,7 @@ class PlayState extends GameState {
 		super.on_leave();
 		container.remove();
 		man.remove();
+
 		stopMusic();
 	}
 
