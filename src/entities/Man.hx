@@ -61,7 +61,38 @@ class Man extends elk.entity.Entity {
 
 	var txt : Text;
 
+	public var freeMove = false;
+
 	public var deadTime = 0.0;
+	public var dead = false;
+	public var evaporated = false;
+
+	var squish = EasedFloat.elastic(1.0, 0.5);
+	var sideSquish = EasedFloat.elastic(0, 0.4);
+	var slideSound : hxd.snd.Channel;
+	var slideTime = 0.0;
+	var slideEndMultiplier = 0.1;
+	var stooping = false;
+
+	static var jumpHeight = 16.0 * 2;
+
+	static var jumpTimeToPeak = 0.4;
+	static var jumpTimeToDescent = 0.3;
+	static var jumpLength = 16.0 * 5;
+
+	static var fastJumpTimeToPeak = 0.3;
+	static var fastJumpTimeToDescent = 0.3;
+
+	var fastJumpGravity = (2 * jumpHeight) / (fastJumpTimeToPeak * fastJumpTimeToPeak);
+	var fastFallGravity = (2 * jumpHeight) / (fastJumpTimeToDescent * fastJumpTimeToDescent);
+
+	var jumpVel = -(2 * jumpHeight) / jumpTimeToPeak;
+	var jumpGravity = (2.0 * jumpHeight) / (jumpTimeToPeak * jumpTimeToPeak);
+	var fallGravity = (2.0 * jumpHeight) / (jumpTimeToDescent * jumpTimeToDescent);
+
+	var jumpVelX = (jumpLength) / (jumpTimeToPeak + jumpTimeToDescent);
+
+	public var slowdown = EasedFloat.smootherstep_in_out(1.0, 0.02);
 
 	public function new(?p) {
 		super();
@@ -125,8 +156,6 @@ class Man extends elk.entity.Entity {
 		Elk.instance.sounds.playWobble(hxd.Res.sound.dodge, 0.4);
 	}
 
-	public var freeMove = false;
-
 	public function processPress() {
 		if( !onGround ) {
 			doDodge();
@@ -136,9 +165,11 @@ class Man extends elk.entity.Entity {
 		started = true;
 
 		var dashAcc = c.DashPower * direction;
-		ax += dashAcc;
-		vx += c.DashPowerVel * direction;
-		vy -= c.JumpPower;
+		// ax += dashAcc;
+		// vx += c.DashPowerVel * direction;
+		// vy -= c.JumpPower;
+		vy = jumpVel;
+		vx += jumpVelX * direction;
 
 		Elk.instance.sounds.playWobble(hxd.Res.sound.jump, 0.5);
 
@@ -236,8 +267,6 @@ class Man extends elk.entity.Entity {
 		y = ry;
 	}
 
-	public var evaporated = false;
-
 	public function evaporate() {
 		if( evaporated ) return;
 		evaporated = true;
@@ -320,8 +349,6 @@ class Man extends elk.entity.Entity {
 		dodgeCooldown = 0.0;
 	}
 
-	var sideSquish = EasedFloat.elastic(0, 0.4);
-
 	function land(landX : Float, landY : Float, speed : Float) {
 		if( onGround ) return;
 
@@ -342,7 +369,7 @@ class Man extends elk.entity.Entity {
 			dodge.visible = true;
 
 			Elk.instance.sounds.playWobble(hxd.Res.sound.hit, 0.4);
-			vy = -c.DashJumpVel * 0.4;
+			vy = -c.DashJumpVel * 0.5;
 			ay = 0;
 			ax *= 0.2;
 
@@ -376,9 +403,6 @@ class Man extends elk.entity.Entity {
 		ay = 0;
 	}
 
-	var slideSound : hxd.snd.Channel;
-	var slideTime = 0.0;
-
 	function startSliding() {
 		state = Sliding;
 		slideTime = 0.0;
@@ -394,8 +418,6 @@ class Man extends elk.entity.Entity {
 		ax = 0;
 		trace('started sldign');
 	}
-
-	var slideEndMultiplier = 0.1;
 
 	function stopSliding() {
 		if( slideSound != null ) slideSound.stop();
@@ -423,8 +445,6 @@ class Man extends elk.entity.Entity {
 		}
 	}
 
-	public var dead = false;
-
 	function die() {
 		if( dead ) return;
 		slowdown.setImmediate(1.0);
@@ -441,7 +461,11 @@ class Man extends elk.entity.Entity {
 	}
 
 	function processMove(dt : Float) {
-		var fric = 1 / (1 + (dt * c.Friction));
+		var baseFriction = c.Friction;
+		if( !onGround ) {
+			baseFriction *= 0.5;
+		}
+		var fric = 1 / (1 + (dt * baseFriction));
 
 		vx += ax * dt;
 		vy += ay * dt;
@@ -532,7 +556,7 @@ class Man extends elk.entity.Entity {
 		var speed = Math.sqrt(vx * vx + vy * vy);
 		var lethal = vy > c.TerminalVel;
 
-		txt.text = '${Math.round(speed)}, $lethal,\nvx: ${Math.round(vx)}\nvy: ${Math.round(vy)}\n${Math.round(stoopPower)}';
+		txt.text = '${Math.round(speed)}, $lethal,\nvx: ${Math.round(vx)}\nvy: ${Math.round(vy)}\n${Math.round(stoopPower)}\n$timeSinceJump';
 
 		sprite.scaleY = squish.value;
 
@@ -568,9 +592,11 @@ class Man extends elk.entity.Entity {
 
 		stoopPower *= 0.9;
 
+		var stooping = isPressed && timeSinceJump > 0.1;
+
 		var extraDown = 1.0;
 		if( !onGround ) {
-			if( isPressed && timeSinceJump > 0.1 ) {
+			if( stooping ) {
 				extraDown = c.ExtraDown;
 				vx *= c.ExtraDownFriction;
 				if( vy > c.TerminalVel * 0.4 ) {
@@ -588,7 +614,14 @@ class Man extends elk.entity.Entity {
 			endingStoop();
 		}
 
-		ay += c.Gravity * extraDown;
+		// ay += c.Gravity * extraDown;
+		if( vy < 0 ) {
+			var g = stooping ? fastJumpGravity : jumpGravity;
+			vy += g * dt;
+		} else {
+			var g = stooping ? fastFallGravity : fallGravity;
+			vy += g * dt;
+		}
 
 		vx = vx.clamp(-c.MaxSpeed, c.MaxSpeed);
 		vy = vy.clamp(-c.MaxSpeedV, c.MaxSpeedV);
@@ -605,11 +638,6 @@ class Man extends elk.entity.Entity {
 		spotLight.y += (ddy * dis * 36 - spotLight.y) * 0.1;
 		spotLight.alpha += (M.smoothstep(0.0, 100, l) * 0.5 - spotLight.alpha) * 0.1;
 	}
-
-	var stooping = false;
-	var squish = EasedFloat.elastic(1.0, 0.5);
-
-	public var slowdown = EasedFloat.smootherstep_in_out(1.0, 0.02);
 
 	function startingStoop() {
 		if( stooping ) return;
